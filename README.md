@@ -233,3 +233,7 @@ Reference text is in `docs/reference_story_en.md`.
 - **v0.1.7**:
   - Add **Objective HUD** (top-center) and wire objectives through dialogue/minigames.
   - Make save/load **backwards-compatible** when new fields are added.
+
+- **v0.1.8**:
+  - Add a minimal **Quest System** (JSON-driven) and persist quest state in saves.
+  - Drive the Objective HUD from the active quest step.

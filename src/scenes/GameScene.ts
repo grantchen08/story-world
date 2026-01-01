@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GameState } from '../systems/GameState';
 import { DialogueSystem } from '../systems/DialogueSystem';
 import { MapManager } from '../systems/MapManager';
+import { QuestSystem } from '../systems/QuestSystem';
 import { Patrol } from '../objects/Patrol';
 
 export class GameScene extends Phaser.Scene {
@@ -40,13 +41,12 @@ export class GameScene extends Phaser.Scene {
     await DialogueSystem.getInstance().loadDialogueFile('chapter2', './data/dialogue/chapter2.json');
     await DialogueSystem.getInstance().loadDialogueFile('chapter3', './data/dialogue/chapter3.json');
     await DialogueSystem.getInstance().loadDialogueFile('chapter4', './data/dialogue/chapter4.json');
+    await QuestSystem.getInstance().loadQuestFile('main_arc', './data/quests/main_arc.json');
 
     const gs = GameState.getInstance();
 
-    // Set a sensible default objective if none yet
-    if (!gs.getCurrentObjective()) {
-        gs.setCurrentObjective('Talk to the Fence.');
-    }
+    // Start main quest once prologue is completed
+    QuestSystem.getInstance().ensureQuestStarted('quest_main_started', 'main_arc');
     // If we start GameScene directly (boot), default into village
     if (gs.getCurrentLocation().startsWith('prologue')) {
         gs.setCurrentLocation('village_square');
@@ -146,6 +146,9 @@ export class GameScene extends Phaser.Scene {
     if (gs.getCurrentLocation() !== this.activeLocation) {
         this.transitionToLocation(gs.getCurrentLocation());
     }
+
+    // Keep quest progression in sync with state/flags
+    QuestSystem.getInstance().update();
 
     if (!this.cursors || this.isDialogueOpen) {
         // Stop movement if dialogue is open
@@ -303,6 +306,11 @@ export class GameScene extends Phaser.Scene {
 
       this.setupLocationEntities(this.activeLocation);
       this.updateUI();
+
+      // Quest flags for location milestones
+      if (newLocation === 'city_gate') {
+          GameState.getInstance().setFlag('reached_city_gate', true);
+      }
   }
 
   private setupLocationEntities(location: string) {
@@ -494,6 +502,7 @@ export class GameScene extends Phaser.Scene {
           if (this.isDialogueOpen) return;
           this.canInteract = true;
           this.interactAction = () => {
+              GameState.getInstance().setFlag('met_insider', true);
               this.startDialogue('chapter3', 'insider_start');
           };
           this.interactExpiresAt = this.time.now + 150;

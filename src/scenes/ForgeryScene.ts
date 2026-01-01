@@ -163,7 +163,6 @@ export class ForgeryScene extends Phaser.Scene {
             gs.setFlag('forgery_attempted', true);
             // Next location becomes available (travel to city gate)
             gs.setFlag('chapter2_unlocked', true);
-            gs.setCurrentObjective('Go to the City Gate.');
 
             this.scene.stop();
             this.scene.resume('GameScene');

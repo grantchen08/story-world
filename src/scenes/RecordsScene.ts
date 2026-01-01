@@ -100,7 +100,6 @@ export class RecordsScene extends Phaser.Scene {
       gs.setFlag('has_proof_piece', true);
       gs.setFlag('records_success', true);
       gs.updateStat('heat', -5);
-      gs.setCurrentObjective('Return to the Insider.');
       this.feedbackText.setText('You found the proof record.');
       this.feedbackText.setColor('#00ff00');
     } else {

@@ -17,6 +17,13 @@ export interface GameData {
   inventory: string[];
   currentLocation: string;
   currentObjective: string;
+  questState: QuestState;
+}
+
+export interface QuestState {
+  activeQuestId: string | null;
+  stepIndex: number;
+  completedQuestIds: string[];
 }
 
 const INITIAL_DATA: GameData = {
@@ -29,7 +36,12 @@ const INITIAL_DATA: GameData = {
   flags: {},
   inventory: [],
   currentLocation: 'prologue_home',
-  currentObjective: 'Begin the story.'
+  currentObjective: 'Begin the story.',
+  questState: {
+    activeQuestId: null,
+    stepIndex: 0,
+    completedQuestIds: []
+  }
 };
 
 export class GameState {
@@ -111,6 +123,34 @@ export class GameState {
     this.data.currentObjective = objective;
   }
 
+  // --- Quests ---
+  public getQuestState(): QuestState {
+    return {
+      activeQuestId: this.data.questState.activeQuestId,
+      stepIndex: this.data.questState.stepIndex,
+      completedQuestIds: [...this.data.questState.completedQuestIds]
+    };
+  }
+
+  public setActiveQuest(questId: string | null, stepIndex: number = 0) {
+    this.data.questState.activeQuestId = questId;
+    this.data.questState.stepIndex = stepIndex;
+  }
+
+  public advanceQuestStep() {
+    this.data.questState.stepIndex += 1;
+  }
+
+  public completeQuest(questId: string) {
+    if (!this.data.questState.completedQuestIds.includes(questId)) {
+      this.data.questState.completedQuestIds.push(questId);
+    }
+    if (this.data.questState.activeQuestId === questId) {
+      this.data.questState.activeQuestId = null;
+      this.data.questState.stepIndex = 0;
+    }
+  }
+
   // --- Persistence ---
   public save() {
     localStorage.setItem('story-world-save', JSON.stringify(this.data));
@@ -128,7 +168,11 @@ export class GameState {
           ...loaded,
           stats: { ...INITIAL_DATA.stats, ...(loaded.stats ?? {}) },
           flags: { ...(loaded.flags ?? {}) },
-          inventory: Array.isArray(loaded.inventory) ? loaded.inventory : []
+          inventory: Array.isArray(loaded.inventory) ? loaded.inventory : [],
+          questState: {
+            ...INITIAL_DATA.questState,
+            ...((loaded as any).questState ?? {})
+          }
         };
         console.log('Game Loaded', this.data);
         return true;
