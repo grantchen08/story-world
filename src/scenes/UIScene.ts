@@ -20,11 +20,13 @@ export class UIScene extends Phaser.Scene {
   create() {
     // Objective HUD (top center)
     this.objectiveText = this.add.text(400, 10, '', {
+      fontFamily: 'monospace',
       fontSize: '14px',
       color: '#ffffff',
       backgroundColor: '#000000aa',
       padding: { x: 8, y: 4 }
     }).setOrigin(0.5, 0);
+    this.objectiveText.setShadow(2, 2, '#000000', 2, true, true);
 
     // Dialog Box Background
     const rect = this.add.rectangle(400, 500, 700, 150, 0x000000, 0.8);
@@ -32,10 +34,12 @@ export class UIScene extends Phaser.Scene {
     
     // Dialog Text
     this.dialogText = this.add.text(400, 460, '', {
+      fontFamily: 'monospace',
       fontSize: '18px',
       color: '#ffffff',
       wordWrap: { width: 660 }
     }).setOrigin(0.5, 0);
+    this.dialogText.setShadow(2, 2, '#000000', 2, true, true);
 
     this.dialogContainer = this.add.container(0, 0, [rect, this.dialogText]);
     this.choiceContainer = this.add.container(0, 0);
@@ -78,8 +82,11 @@ export class UIScene extends Phaser.Scene {
             });
 
         const txt = this.add.text(400, yOffset, `${index + 1}. ${choice.text}`, {
-            fontSize: '16px', color: '#ffffff'
+            fontFamily: 'monospace',
+            fontSize: '16px',
+            color: '#ffffff'
         }).setOrigin(0.5);
+        txt.setShadow(2, 2, '#000000', 2, true, true);
 
         this.choiceContainer.add([bg, txt]);
         yOffset += 35;

@@ -19,15 +19,40 @@ export class MapManager {
         // Generate placeholder tileset texture if not present
         if (!scene.textures.exists('tiles')) {
             const graphics = scene.make.graphics({ x: 0, y: 0 });
-            
-            // Tile 1: Grass/Ground (Dark Green)
-            graphics.fillStyle(0x004400);
+
+            // Two-tile mini-tileset, but with texture/pattern so it doesn't feel like flat debug colors.
+            // Tile 1: Ground (dithered dark green)
+            graphics.fillStyle(0x18361f, 1);
             graphics.fillRect(0, 0, 32, 32);
-            
-            // Tile 2: Wall/Obstacle (Dark Gray)
-            graphics.fillStyle(0x555555);
+            for (let i = 0; i < 90; i++) {
+                const x = (i * 11) % 32;
+                const y = (i * 17) % 32;
+                const c = (i % 3 === 0) ? 0x224a2c : 0x142c1a;
+                graphics.fillStyle(c, 0.35);
+                graphics.fillRect(x, y, 2, 2);
+            }
+            // subtle top highlight
+            graphics.fillStyle(0x2b5a37, 0.12);
+            graphics.fillRect(0, 0, 32, 4);
+
+            // Tile 2: Wall (brick-ish dark stone)
+            graphics.fillStyle(0x2a2e35, 1);
             graphics.fillRect(32, 0, 32, 32);
-            
+            graphics.lineStyle(1, 0x1b1f25, 0.8);
+            for (let y = 4; y <= 28; y += 8) {
+                graphics.lineBetween(32, y, 64, y);
+                const offset = (y / 8) % 2 === 0 ? 6 : 0;
+                for (let x = 32 + offset; x < 64; x += 12) {
+                    graphics.lineBetween(x, y - 4, x, y + 4);
+                }
+            }
+            // edge shading
+            graphics.fillStyle(0x000000, 0.18);
+            graphics.fillRect(32, 0, 2, 32);
+            graphics.fillRect(62, 0, 2, 32);
+            graphics.fillRect(32, 0, 32, 2);
+            graphics.fillRect(32, 30, 32, 2);
+
             graphics.generateTexture('tiles', 64, 32);
         }
     }

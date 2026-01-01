@@ -97,6 +97,17 @@ This is a suggested "small but complete" arc:
 
 ---
 
+## Visual polish (current prototype)
+
+Even with placeholder shapes/tiles, the prototype aims for “high mood” through rendering and VFX:
+
+- **Pixel-perfect rendering**: `pixelArt: true`, `antialias: false`, and `roundPixels` to keep motion crisp.
+- **Responsive scaling**: FIT + centered canvas so it displays cleanly across window sizes.
+- **Dynamic lighting**: a screen-space darkness overlay with a soft player spotlight that reacts to **Time** (Day/Night/Curfew) and **Heat**.
+- **Stealth feedback**: brief screen flash + small camera shake when patrol detection ticks up Heat.
+
+---
+
 ## Technical approach (HTML/JS)
 
 ### Engine

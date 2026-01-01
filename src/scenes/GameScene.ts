@@ -4,6 +4,7 @@ import { DialogueSystem } from '../systems/DialogueSystem';
 import { MapManager } from '../systems/MapManager';
 import { QuestSystem } from '../systems/QuestSystem';
 import { Patrol } from '../objects/Patrol';
+import { TimeOfDay } from '../systems/GameState';
 
 export class GameScene extends Phaser.Scene {
   private player!: Phaser.GameObjects.Arc;
@@ -21,6 +22,9 @@ export class GameScene extends Phaser.Scene {
   private interactExpiresAt: number = 0;
   private lastChapter2Unlocked: boolean | null = null;
   private lastPalaceUnlocked: boolean | null = null;
+  private lightOverlay!: Phaser.GameObjects.RenderTexture;
+  private spotlightStamp!: Phaser.GameObjects.Image;
+  private detectionFlash!: Phaser.GameObjects.Rectangle;
 
   constructor() {
     super('GameScene');
@@ -80,6 +84,7 @@ export class GameScene extends Phaser.Scene {
     // 3. Setup Camera
     this.cameras.main.setBounds(0, 0, MapManager.getInstance().getMapWidth(), MapManager.getInstance().getMapHeight());
     this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
+    this.cameras.main.roundPixels = true;
 
     // 4. Setup Input
     if (this.input.keyboard) {
@@ -138,6 +143,9 @@ export class GameScene extends Phaser.Scene {
     if (!this.scene.isActive('UIScene')) {
         this.scene.launch('UIScene');
     }
+
+    // 6. Visual polish: lighting overlay + detection flash (no new art required)
+    this.setupVisualOverlays();
   }
 
   update(time: number, delta: number) {
@@ -160,6 +168,7 @@ export class GameScene extends Phaser.Scene {
         // Stop movement if dialogue is open
         const body = this.player.body as Phaser.Physics.Arcade.Body;
         if (body) body.setVelocity(0); // Also guard here just in case
+        this.updateVisualOverlays();
         return;
     }
 
@@ -252,11 +261,13 @@ export class GameScene extends Phaser.Scene {
             GameState.getInstance().updateStat('heat', 1); // Increase heat
             this.updateUI();
             this.detectionTimer = 0;
-            // Visual feedback could go here (screen flash, sound)
+            this.triggerDetectionFeedback();
         }
     } else {
         this.detectionTimer = 0;
     }
+
+    this.updateVisualOverlays();
   }
 
   private updateUI() {
@@ -717,5 +728,74 @@ export class GameScene extends Phaser.Scene {
         text: `${node.speaker}: ${node.text}`,
         choices: uiChoices
     });
+  }
+
+  private setupVisualOverlays() {
+      // Soft circular stamp used to "erase" a hole in the darkness overlay.
+      if (!this.textures.exists('spotlight')) {
+          const g = this.add.graphics({ x: 0, y: 0 });
+          g.setVisible(false);
+          const radius = 140;
+          // Concentric circles to approximate a radial gradient.
+          for (let r = radius; r > 0; r -= 6) {
+              const t = r / radius; // 1..0
+              const alpha = Phaser.Math.Clamp((1 - t) * 0.20, 0, 0.20);
+              g.fillStyle(0xffffff, alpha);
+              g.fillCircle(radius, radius, r);
+          }
+          g.generateTexture('spotlight', radius * 2, radius * 2);
+          g.destroy();
+      }
+
+      this.spotlightStamp = this.add.image(-9999, -9999, 'spotlight').setVisible(false);
+
+      this.lightOverlay = this.add.renderTexture(0, 0, 800, 600).setOrigin(0, 0);
+      this.lightOverlay.setScrollFactor(0);
+      this.lightOverlay.setDepth(9000);
+
+      // Red flash when detected (brief + subtle)
+      this.detectionFlash = this.add.rectangle(0, 0, 800, 600, 0xff2a2a, 0).setOrigin(0, 0);
+      this.detectionFlash.setScrollFactor(0);
+      this.detectionFlash.setDepth(9100);
+  }
+
+  private updateVisualOverlays() {
+      if (!this.lightOverlay || !this.player) return;
+
+      const gs = GameState.getInstance();
+      const timeOfDay = gs.getTime();
+      const heat = gs.getStats().heat;
+
+      // Base darkness per time-of-day + slight increase with Heat.
+      let darkness = 0.10; // Day
+      if (timeOfDay === TimeOfDay.Night) darkness = 0.45;
+      if (timeOfDay === TimeOfDay.Curfew) darkness = 0.58;
+      darkness = Phaser.Math.Clamp(darkness + heat / 250, 0.08, 0.72);
+
+      // Player spotlight size shrinks slightly as Heat rises (tighter, more claustrophobic).
+      const spotlightScale = Phaser.Math.Clamp(1.15 - heat / 140, 0.75, 1.15);
+      this.spotlightStamp.setScale(spotlightScale);
+
+      const cam = this.cameras.main;
+      const px = this.player.x - cam.scrollX;
+      const py = this.player.y - cam.scrollY;
+
+      this.lightOverlay.clear();
+      this.lightOverlay.fill(0x000000, darkness);
+      this.lightOverlay.erase(this.spotlightStamp, px, py);
+  }
+
+  private triggerDetectionFeedback() {
+      // Small shake feels like "you've been spotted" without being obnoxious.
+      this.cameras.main.shake(70, 0.004);
+
+      if (!this.detectionFlash) return;
+      this.detectionFlash.alpha = 0;
+      this.tweens.add({
+          targets: this.detectionFlash,
+          alpha: { from: 0.18, to: 0 },
+          duration: 220,
+          ease: 'Quad.easeOut'
+      });
   }
 }
