@@ -1,0 +1,89 @@
+{
+  "nodes": [
+    {
+      "id": "prologue_start",
+      "speaker": "Narrator",
+      "text": "The night is heavy. The oil lamp flickers, casting long shadows against the mud walls. Your mother sits in the corner, mending a garment that looks too large for you.",
+      "choices": [
+        {
+          "text": "Watch her silently.",
+          "to": "prologue_mother_notice",
+          "effects": { "add": { "compassion": 5 } }
+        },
+        {
+          "text": "Check the door lock again.",
+          "to": "prologue_check_door",
+          "effects": { "add": { "heat": 5, "resolve": 5 } }
+        }
+      ]
+    },
+    {
+      "id": "prologue_check_door",
+      "speaker": "Narrator",
+      "text": "The bar is solid, but the rats gnawing in the thatch sound like footsteps. You cannot rest.",
+      "choices": [
+        {
+          "text": "Sit down.",
+          "to": "prologue_mother_notice"
+        }
+      ]
+    },
+    {
+      "id": "prologue_mother_notice",
+      "speaker": "Mother",
+      "text": "You are restless, my son. The water in the jar has been boiling for some time.",
+      "choices": [
+        {
+          "text": "I am waiting for the time.",
+          "to": "prologue_vow_setup",
+          "effects": { "add": { "resolve": 5 } }
+        },
+        {
+          "text": "I was just thinking.",
+          "to": "prologue_vow_setup"
+        }
+      ]
+    },
+    {
+      "id": "prologue_vow_setup",
+      "speaker": "Mother",
+      "text": "Your father died on this night, sixteen years ago. His head hangs in the King's city. Do you still remember what you promised?",
+      "choices": [
+        {
+          "text": "I will bring his head back.",
+          "to": "prologue_vow_commit",
+          "effects": { "add": { "resolve": 10, "heat": 5 }, "set": { "vow_taken": true } }
+        },
+        {
+          "text": "I need to know why he died first.",
+          "to": "prologue_vow_delay",
+          "effects": { "add": { "compassion": 10 }, "set": { "vow_taken": false } }
+        }
+      ]
+    },
+    {
+      "id": "prologue_vow_commit",
+      "speaker": "Mother",
+      "text": "Good. The iron is cold, but the blood is still hot. Take the bundle under the bed. It is time to go.",
+      "choices": [
+        {
+          "text": "Take the bundle and leave.",
+          "to": "exit_to_village",
+          "effects": { "set": { "currentLocation": "village_square" } }
+        }
+      ]
+    },
+    {
+      "id": "prologue_vow_delay",
+      "speaker": "Mother",
+      "text": "Knowledge is a heavy burden, sometimes heavier than a sword. But if that is your will... take the bundle. Go.",
+      "choices": [
+        {
+          "text": "Take the bundle and leave.",
+          "to": "exit_to_village",
+          "effects": { "set": { "currentLocation": "village_square" } }
+        }
+      ]
+    }
+  ]
+}

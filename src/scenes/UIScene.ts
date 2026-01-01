@@ -35,6 +35,7 @@ export class UIScene extends Phaser.Scene {
     // Listen for events from GameScene
     const game = this.scene.get('GameScene');
     game.events.on('show-dialogue', this.showDialogue, this);
+    game.events.on('hide-dialogue', this.hideDialogue, this);
   }
 
   public showDialogue(data: { text: string, choices: Choice[] }) {
@@ -53,7 +54,7 @@ export class UIScene extends Phaser.Scene {
             .on('pointerout', () => bg.setFillStyle(0x333333))
             .on('pointerdown', () => {
                 choice.callback();
-                this.hideDialogue();
+                // Do NOT auto-hide; let the callback decide if we close or show next
             });
 
         const txt = this.add.text(400, yOffset, `${index + 1}. ${choice.text}`, {

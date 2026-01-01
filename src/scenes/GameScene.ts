@@ -1,17 +1,26 @@
 import Phaser from 'phaser';
 import { GameState } from '../systems/GameState';
+import { DialogueSystem } from '../systems/DialogueSystem';
 
 export class GameScene extends Phaser.Scene {
   private player!: Phaser.GameObjects.Arc;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private speed: number = 200;
   private stateText!: Phaser.GameObjects.Text;
+  private isDialogueOpen: boolean = false;
 
   constructor() {
     super('GameScene');
   }
 
-  create() {
+  preload() {
+    // Determine loading strategy. For now, we can just fetch via DialogueSystem in create
+  }
+
+  async create() {
+    // 0. Load Data
+    await DialogueSystem.getInstance().loadDialogueFile('prologue', './data/dialogue/prologue.json');
+
     // 1. Setup World (Placeholder)
     this.add.grid(0, 0, 1600, 1200, 32, 32, 0x00b9f2).setAlpha(0.2).setOrigin(0);
     this.physics.world.setBounds(0, 0, 1600, 1200);
@@ -50,30 +59,11 @@ export class GameScene extends Phaser.Scene {
             }
         });
 
-        // Test Dialogue Trigger
+        // Trigger Prologue Dialogue
         this.input.keyboard.on('keydown-T', () => {
-            this.events.emit('show-dialogue', {
-                text: "Stranger: The path ahead is watched. What will you do?",
-                choices: [
-                    { 
-                        text: "[Resolve] Push through.", 
-                        callback: () => {
-                            GameState.getInstance().updateStat('resolve', 5);
-                            GameState.getInstance().updateStat('heat', 10);
-                            this.updateUI();
-                            console.log("Chose Resolve");
-                        }
-                    },
-                    { 
-                        text: "[Compassion] Find another way.", 
-                        callback: () => {
-                            GameState.getInstance().updateStat('compassion', 5);
-                            this.updateUI();
-                            console.log("Chose Compassion");
-                        }
-                    }
-                ]
-            });
+            if (!this.isDialogueOpen) {
+                this.startDialogue('prologue', 'prologue_start');
+            }
         });
     }
 
@@ -86,21 +76,24 @@ export class GameScene extends Phaser.Scene {
     
     this.updateUI();
     
-    // Instructions
-    this.add.text(10, 500, 'WASD/Arrows to move\nT: Talk Test\nR/H: Stats, S/L: Save/Load', {
+    this.add.text(10, 500, 'WASD to move\nT: Start Prologue\nR/H: Stats, S/L: Save/Load', {
          fontSize: '14px',
          color: '#ffff00',
          backgroundColor: '#000000aa'
     }).setScrollFactor(0);
 
-    // Launch UI Scene if not running (safety check, though Main handles it)
     if (!this.scene.isActive('UIScene')) {
         this.scene.launch('UIScene');
     }
   }
 
   update() {
-    if (!this.cursors) return;
+    if (!this.cursors || this.isDialogueOpen) {
+        // Stop movement if dialogue is open
+        const body = this.player.body as Phaser.Physics.Arcade.Body;
+        body.setVelocity(0);
+        return;
+    }
 
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     const speed = this.speed;
@@ -130,5 +123,57 @@ export class GameScene extends Phaser.Scene {
     this.stateText.setText(
         `Time: ${time}\nResolve: ${stats.resolve}\nCompassion: ${stats.compassion}\nHeat: ${stats.heat}`
     );
+  }
+
+  private startDialogue(fileKey: string, nodeId: string) {
+    const ds = DialogueSystem.getInstance();
+    const node = ds.getNode(fileKey, nodeId);
+
+    if (!node) {
+        console.error(`Dialogue node not found: ${fileKey}:${nodeId}`);
+        // If node ends with "exit", we close dialogue
+        if (nodeId.startsWith('exit')) {
+             this.isDialogueOpen = false;
+             this.events.emit('hide-dialogue');
+        }
+        return;
+    }
+
+    // Process entry effects (if any - though usually effects are on choices, node effects can be auto-applied)
+    if (node.effects) {
+        ds.processEffects(node.effects);
+        this.updateUI();
+    }
+
+    this.isDialogueOpen = true;
+
+    // Filter choices based on conditions
+    const availableChoices = node.choices.filter(c => ds.checkConditions(c.conditions));
+
+    // Map to UI format
+    const uiChoices = availableChoices.map(c => ({
+        text: c.text,
+        callback: () => {
+            // Apply choice effects
+            if (c.effects) {
+                ds.processEffects(c.effects);
+                this.updateUI();
+            }
+            
+            // Navigate or Close
+            if (c.to.startsWith('exit')) {
+                this.isDialogueOpen = false;
+                this.events.emit('hide-dialogue');
+            } else {
+                // Next node
+                this.startDialogue(fileKey, c.to);
+            }
+        }
+    }));
+
+    this.events.emit('show-dialogue', {
+        text: `${node.speaker}: ${node.text}`,
+        choices: uiChoices
+    });
   }
 }
