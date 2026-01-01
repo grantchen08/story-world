@@ -36,6 +36,7 @@ export class GameScene extends Phaser.Scene {
     await DialogueSystem.getInstance().loadDialogueFile('prologue', './data/dialogue/prologue.json');
     await DialogueSystem.getInstance().loadDialogueFile('chapter1', './data/dialogue/chapter1.json');
     await DialogueSystem.getInstance().loadDialogueFile('chapter2', './data/dialogue/chapter2.json');
+    await DialogueSystem.getInstance().loadDialogueFile('chapter3', './data/dialogue/chapter3.json');
 
     const gs = GameState.getInstance();
     // If we start GameScene directly (boot), default into village
@@ -460,8 +461,32 @@ export class GameScene extends Phaser.Scene {
           if (this.isDialogueOpen) return;
           this.canInteract = true;
           this.interactAction = () => {
-              // For now, just a quick prologue node as placeholder interaction
-              this.startDialogue('prologue', 'prologue_mother_notice');
+              this.startDialogue('chapter3', 'insider_start');
+          };
+          this.interactExpiresAt = this.time.now + 150;
+      });
+
+      // Records interaction (mini-puzzle to get proof)
+      const recordsPos = new Phaser.Math.Vector2(260, 260);
+      const recordsVisual = this.add.rectangle(recordsPos.x, recordsPos.y, 56, 32, 0x6666aa);
+      this.locationObjects.push(recordsVisual);
+      const recordsLabel = this.add.text(recordsPos.x, recordsPos.y + 26, 'Records', { fontSize: '12px', color: '#ffffff' }).setOrigin(0.5);
+      this.locationObjects.push(recordsLabel);
+
+      const recordsZone = this.add.zone(recordsPos.x, recordsPos.y, 70, 50);
+      this.locationObjects.push(recordsZone);
+      this.physics.add.existing(recordsZone);
+      const rzBody = recordsZone.body as Phaser.Physics.Arcade.Body;
+      rzBody.setAllowGravity(false);
+      rzBody.setImmovable(true);
+
+      this.physics.add.overlap(this.player, recordsZone, () => {
+          if (this.isDialogueOpen) return;
+          if (GameState.getInstance().hasFlag('has_proof_piece')) return;
+          this.canInteract = true;
+          this.interactAction = () => {
+              this.scene.pause();
+              this.scene.launch('RecordsScene');
           };
           this.interactExpiresAt = this.time.now + 150;
       });

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GameScene } from './scenes/GameScene';
 import { UIScene } from './scenes/UIScene';
 import { ForgeryScene } from './scenes/ForgeryScene';
+import { RecordsScene } from './scenes/RecordsScene';
 
 // Define a simple BootScene to start
 class BootScene extends Phaser.Scene {
@@ -49,7 +50,7 @@ const config: Phaser.Types.Core.GameConfig = {
       debug: false
     }
   },
-  scene: [BootScene, GameScene, UIScene, ForgeryScene]
+  scene: [BootScene, GameScene, UIScene, ForgeryScene, RecordsScene]
 };
 
 new Phaser.Game(config);

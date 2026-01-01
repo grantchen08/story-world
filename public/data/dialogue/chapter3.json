@@ -1,0 +1,59 @@
+{
+  "nodes": [
+    {
+      "id": "insider_start",
+      "speaker": "Insider",
+      "text": "You made it past the gate. That means you're either lucky… or dangerous.",
+      "choices": [
+        { "text": "I need access to the palace perimeter.", "to": "insider_need_proof" },
+        { "text": "Never mind.", "to": "exit" }
+      ]
+    },
+    {
+      "id": "insider_need_proof",
+      "speaker": "Insider",
+      "text": "Access is bought with proof. If you want a route, bring me a record that ties the King’s clerk to the executions.",
+      "choices": [
+        {
+          "text": "I already have proof.",
+          "to": "insider_with_proof",
+          "conditions": { "eq": { "has_proof_piece": true } }
+        },
+        {
+          "text": "Where do I find it?",
+          "to": "insider_where"
+        }
+      ]
+    },
+    {
+      "id": "insider_where",
+      "speaker": "Insider",
+      "text": "Records room, east block. Middle ledger. Go quiet. If Heat is high, they’ll notice your shadow.",
+      "choices": [
+        {
+          "text": "Understood.",
+          "to": "exit",
+          "effects": { "set": { "need_proof_piece": true } }
+        }
+      ]
+    },
+    {
+      "id": "insider_with_proof",
+      "speaker": "Insider",
+      "text": "…This is enough. Now—do you trust me to move it, or do you keep it and walk alone?",
+      "choices": [
+        {
+          "text": "I trust you. Use it to open the route.",
+          "to": "exit",
+          "effects": { "set": { "trusted_insider": true, "palace_route_unlocked": true } }
+        },
+        {
+          "text": "I don’t trust anyone. I’ll keep it.",
+          "to": "exit",
+          "effects": { "set": { "trusted_insider": false, "palace_route_unlocked": true } }
+        }
+      ]
+    }
+  ]
+}
+
