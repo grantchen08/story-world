@@ -88,10 +88,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   update() {
+    // Add guard clause for uninitialized player
+    if (!this.player) return;
+
     if (!this.cursors || this.isDialogueOpen) {
         // Stop movement if dialogue is open
         const body = this.player.body as Phaser.Physics.Arcade.Body;
-        body.setVelocity(0);
+        if (body) body.setVelocity(0); // Also guard here just in case
         return;
     }
 
