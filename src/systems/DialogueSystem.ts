@@ -73,10 +73,9 @@ export class DialogueSystem {
         if (typeof value === 'boolean') {
             gameState.setFlag(key, value);
         }
-        // Special case for location or other strings if needed
-        if (key === 'currentLocation') {
-             // We might handle this via a scene transition manager later
-             console.log("Location changed to", value);
+        // Special case for location transitions
+        if (key === 'currentLocation' && typeof value === 'string') {
+             gameState.setCurrentLocation(value);
         }
       }
     }

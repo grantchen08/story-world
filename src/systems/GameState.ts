@@ -91,6 +91,15 @@ export class GameState {
     return this.data.time;
   }
 
+  // --- Location ---
+  public getCurrentLocation(): string {
+    return this.data.currentLocation;
+  }
+
+  public setCurrentLocation(location: string) {
+    this.data.currentLocation = location;
+  }
+
   // --- Persistence ---
   public save() {
     localStorage.setItem('story-world-save', JSON.stringify(this.data));

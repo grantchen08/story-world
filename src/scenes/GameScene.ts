@@ -7,11 +7,16 @@ import { Patrol } from '../objects/Patrol';
 export class GameScene extends Phaser.Scene {
   private player!: Phaser.GameObjects.Arc;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+  private interactKey!: Phaser.Input.Keyboard.Key;
   private speed: number = 200;
   private stateText!: Phaser.GameObjects.Text;
   private isDialogueOpen: boolean = false;
   private patrols: Patrol[] = [];
   private detectionTimer: number = 0;
+  private activeLocation: string = 'village_square';
+  private locationObjects: Phaser.GameObjects.GameObject[] = [];
+  private canInteract: boolean = false;
+  private interactAction: (() => void) | null = null;
 
   constructor() {
     super('GameScene');
@@ -20,16 +25,26 @@ export class GameScene extends Phaser.Scene {
   preload() {
     // Load map
     this.load.tilemapTiledJSON('village', 'maps/village.json');
+    this.load.tilemapTiledJSON('city_gate', 'maps/city_gate.json');
+    this.load.tilemapTiledJSON('inner_city', 'maps/inner_city.json');
   }
 
   async create() {
     // 0. Load Data
     await DialogueSystem.getInstance().loadDialogueFile('prologue', './data/dialogue/prologue.json');
     await DialogueSystem.getInstance().loadDialogueFile('chapter1', './data/dialogue/chapter1.json');
+    await DialogueSystem.getInstance().loadDialogueFile('chapter2', './data/dialogue/chapter2.json');
+
+    const gs = GameState.getInstance();
+    // If we start GameScene directly (boot), default into village
+    if (gs.getCurrentLocation().startsWith('prologue')) {
+        gs.setCurrentLocation('village_square');
+    }
+    this.activeLocation = gs.getCurrentLocation();
 
     // 1. Setup World
     MapManager.getInstance().init(this);
-    MapManager.getInstance().loadMap(this, 'village');
+    MapManager.getInstance().loadMap(this, this.mapKeyForLocation(this.activeLocation));
     
     // 2. Setup Player
     const spawn = MapManager.getInstance().getSpawnPoint('SpawnPoint') || new Phaser.Math.Vector2(400, 300);
@@ -44,26 +59,8 @@ export class GameScene extends Phaser.Scene {
         this.physics.add.collider(this.player, walls);
     }
 
-    // Fence NPC
-    const fence = this.add.circle(600, 200, 16, 0x00ff00); // Green NPC
-    this.physics.add.existing(fence);
-    const fenceBody = fence.body as Phaser.Physics.Arcade.Body;
-    fenceBody.setImmovable(true);
-    this.physics.add.collider(this.player, fence, () => {
-         if (!this.isDialogueOpen) {
-             this.startDialogue('chapter1', 'chapter1_start');
-         }
-    });
-
-    // 2.5 Setup Patrols
-    const patrolPath = [
-        new Phaser.Math.Vector2(300, 300),
-        new Phaser.Math.Vector2(500, 300),
-        new Phaser.Math.Vector2(500, 100),
-        new Phaser.Math.Vector2(300, 100)
-    ];
-    const patrol = new Patrol(this, 300, 300, patrolPath);
-    this.patrols.push(patrol);
+    // 2.5 Setup Location Entities (NPCs, exits, patrols)
+    this.setupLocationEntities(this.activeLocation);
 
     // 3. Setup Camera
     this.cameras.main.setBounds(0, 0, MapManager.getInstance().getMapWidth(), MapManager.getInstance().getMapHeight());
@@ -72,6 +69,7 @@ export class GameScene extends Phaser.Scene {
     // 4. Setup Input
     if (this.input.keyboard) {
         this.cursors = this.input.keyboard.createCursorKeys();
+        this.interactKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
         
         // Debug keys
         this.input.keyboard.on('keydown-R', () => {
@@ -114,27 +112,9 @@ export class GameScene extends Phaser.Scene {
         backgroundColor: '#000000'
     }).setScrollFactor(0);
     
-    // 6. Setup Interactive Zones/Objects
-    // Forgery Table in Village
-    const forgeryZone = this.add.zone(200, 200, 40, 40);
-    this.physics.add.existing(forgeryZone);
-    const fzBody = forgeryZone.body as Phaser.Physics.Arcade.Body;
-    fzBody.setAllowGravity(false);
-    
-    // Add visual marker for table
-    this.add.rectangle(200, 200, 32, 32, 0x8B4513); // Brown table
-    
-    this.physics.add.overlap(this.player, forgeryZone, () => {
-        // Show interaction prompt
-        if (!this.isDialogueOpen) {
-             // We can just use the UI update to show context, or a separate hint
-             // For now, rely on the static text instructions, but maybe flash a message?
-        }
-    });
-    
     this.updateUI();
     
-    this.add.text(10, 500, 'WASD to move\nT: Prologue, F: Forgery\nR/H: Stats, S/L: Save/Load', {
+    this.add.text(10, 500, 'WASD to move\nE: Interact\nT: Prologue, F: Forgery\nR/H: Stats, S/L: Save/Load', {
          fontSize: '14px',
          color: '#ffff00',
          backgroundColor: '#000000aa'
@@ -149,11 +129,22 @@ export class GameScene extends Phaser.Scene {
     // Add guard clause for uninitialized player
     if (!this.player) return;
 
+    // Handle location changes driven by dialogue/effects
+    const gs = GameState.getInstance();
+    if (gs.getCurrentLocation() !== this.activeLocation) {
+        this.transitionToLocation(gs.getCurrentLocation());
+    }
+
     if (!this.cursors || this.isDialogueOpen) {
         // Stop movement if dialogue is open
         const body = this.player.body as Phaser.Physics.Arcade.Body;
         if (body) body.setVelocity(0); // Also guard here just in case
         return;
+    }
+
+    // Interaction
+    if (this.canInteract && this.interactAction && Phaser.Input.Keyboard.JustDown(this.interactKey)) {
+        this.interactAction();
     }
 
     const body = this.player.body as Phaser.Physics.Arcade.Body;
@@ -206,8 +197,214 @@ export class GameScene extends Phaser.Scene {
     const stats = GameState.getInstance().getStats();
     const time = GameState.getInstance().getTime();
     this.stateText.setText(
-        `Time: ${time}\nResolve: ${stats.resolve}\nCompassion: ${stats.compassion}\nHeat: ${stats.heat}`
+        `Loc: ${GameState.getInstance().getCurrentLocation()}\nTime: ${time}\nResolve: ${stats.resolve}\nCompassion: ${stats.compassion}\nHeat: ${stats.heat}`
     );
+  }
+
+  private mapKeyForLocation(location: string): string {
+      if (location === 'city_gate') return 'city_gate';
+      if (location === 'inner_city') return 'inner_city';
+      return 'village';
+  }
+
+  private clearLocationEntities() {
+      for (const obj of this.locationObjects) {
+          obj.destroy();
+      }
+      this.locationObjects = [];
+      this.patrols = [];
+      this.canInteract = false;
+      this.interactAction = null;
+  }
+
+  private transitionToLocation(newLocation: string) {
+      this.activeLocation = newLocation;
+      this.clearLocationEntities();
+
+      MapManager.getInstance().loadMap(this, this.mapKeyForLocation(this.activeLocation));
+
+      const spawn = MapManager.getInstance().getSpawnPoint('SpawnPoint') || new Phaser.Math.Vector2(200, 200);
+      this.player.setPosition(spawn.x, spawn.y);
+      const body = this.player.body as Phaser.Physics.Arcade.Body;
+      body.setVelocity(0);
+      body.setCollideWorldBounds(true);
+
+      // Re-apply collisions
+      const walls = MapManager.getInstance().getCollisionLayer();
+      if (walls) {
+          this.physics.add.collider(this.player, walls);
+      }
+
+      // Update camera bounds
+      this.cameras.main.setBounds(0, 0, MapManager.getInstance().getMapWidth(), MapManager.getInstance().getMapHeight());
+
+      this.setupLocationEntities(this.activeLocation);
+      this.updateUI();
+  }
+
+  private setupLocationEntities(location: string) {
+      // Reset interaction state on location init
+      this.canInteract = false;
+      this.interactAction = null;
+
+      if (location === 'city_gate') {
+          this.setupCityGate();
+          return;
+      }
+      if (location === 'inner_city') {
+          this.setupInnerCity();
+          return;
+      }
+      this.setupVillage();
+  }
+
+  private setupVillage() {
+      // Fence NPC
+      const fence = this.add.circle(600, 200, 16, 0x00ff00);
+      this.locationObjects.push(fence);
+      this.physics.add.existing(fence);
+      const fenceBody = fence.body as Phaser.Physics.Arcade.Body;
+      fenceBody.setImmovable(true);
+
+      this.physics.add.overlap(this.player, fence, () => {
+          if (this.isDialogueOpen) return;
+          this.canInteract = true;
+          this.interactAction = () => this.startDialogue('chapter1', 'chapter1_start');
+      });
+
+      // Forgery Table
+      const tablePos = new Phaser.Math.Vector2(200, 200);
+      const tableVisual = this.add.rectangle(tablePos.x, tablePos.y, 32, 32, 0x8b4513);
+      this.locationObjects.push(tableVisual);
+
+      const forgeryZone = this.add.zone(tablePos.x, tablePos.y, 40, 40);
+      this.locationObjects.push(forgeryZone);
+      this.physics.add.existing(forgeryZone);
+      const fzBody = forgeryZone.body as Phaser.Physics.Arcade.Body;
+      fzBody.setAllowGravity(false);
+      fzBody.setImmovable(true);
+
+      this.physics.add.overlap(this.player, forgeryZone, () => {
+          if (this.isDialogueOpen) return;
+          this.canInteract = true;
+          this.interactAction = () => {
+              this.scene.pause();
+              this.scene.launch('ForgeryScene');
+          };
+      });
+
+      // Exit to City Gate (unlocks after forgery attempt)
+      const exitVisual = this.add.rectangle(760, 300, 24, 120, 0xaaaaaa);
+      this.locationObjects.push(exitVisual);
+      const exitZone = this.add.zone(760, 300, 40, 140);
+      this.locationObjects.push(exitZone);
+      this.physics.add.existing(exitZone);
+      const ezBody = exitZone.body as Phaser.Physics.Arcade.Body;
+      ezBody.setAllowGravity(false);
+      ezBody.setImmovable(true);
+
+      this.physics.add.overlap(this.player, exitZone, () => {
+          if (this.isDialogueOpen) return;
+          if (!GameState.getInstance().hasFlag('chapter2_unlocked')) return;
+          this.canInteract = true;
+          this.interactAction = () => {
+              GameState.getInstance().setCurrentLocation('city_gate');
+          };
+      });
+
+      // Patrols (basic)
+      const patrolPath = [
+          new Phaser.Math.Vector2(300, 300),
+          new Phaser.Math.Vector2(500, 300),
+          new Phaser.Math.Vector2(500, 100),
+          new Phaser.Math.Vector2(300, 100)
+      ];
+      this.patrols.push(new Patrol(this, 300, 300, patrolPath));
+  }
+
+  private setupCityGate() {
+      const clerkPos = MapManager.getInstance().getObjectPosition('GateClerk') || new Phaser.Math.Vector2(540, 350);
+      const clerk = this.add.circle(clerkPos.x, clerkPos.y, 16, 0xffcc00);
+      this.locationObjects.push(clerk);
+      this.physics.add.existing(clerk);
+      const cBody = clerk.body as Phaser.Physics.Arcade.Body;
+      cBody.setImmovable(true);
+
+      this.physics.add.overlap(this.player, clerk, () => {
+          if (this.isDialogueOpen) return;
+          this.canInteract = true;
+          this.interactAction = () => this.startDialogue('chapter2', 'gate_start');
+      });
+
+      // Heat-driven patrol density
+      const heat = GameState.getInstance().getStats().heat;
+      const basePath = [
+          new Phaser.Math.Vector2(200, 450),
+          new Phaser.Math.Vector2(600, 450),
+          new Phaser.Math.Vector2(600, 250),
+          new Phaser.Math.Vector2(200, 250)
+      ];
+      this.patrols.push(new Patrol(this, 200, 450, basePath));
+
+      if (heat >= 30) {
+          const extraPath = [
+              new Phaser.Math.Vector2(120, 520),
+              new Phaser.Math.Vector2(700, 520)
+          ];
+          this.patrols.push(new Patrol(this, 120, 520, extraPath));
+      }
+
+      if (heat >= 60) {
+          const extraPath2 = [
+              new Phaser.Math.Vector2(120, 180),
+              new Phaser.Math.Vector2(700, 180)
+          ];
+          this.patrols.push(new Patrol(this, 700, 180, extraPath2));
+      }
+
+      // Optional: if already entered city, allow exit zone to inner city
+      const toInnerPos = MapManager.getInstance().getObjectPosition('ToInnerCity') || new Phaser.Math.Vector2(400, 80);
+      const exitZone = this.add.zone(toInnerPos.x + 48, toInnerPos.y + 24, 96, 48);
+      this.locationObjects.push(exitZone);
+      this.physics.add.existing(exitZone);
+      const ezBody = exitZone.body as Phaser.Physics.Arcade.Body;
+      ezBody.setAllowGravity(false);
+      ezBody.setImmovable(true);
+
+      this.physics.add.overlap(this.player, exitZone, () => {
+          if (this.isDialogueOpen) return;
+          if (!GameState.getInstance().hasFlag('entered_city')) return;
+          this.canInteract = true;
+          this.interactAction = () => {
+              GameState.getInstance().setCurrentLocation('inner_city');
+          };
+      });
+  }
+
+  private setupInnerCity() {
+      // Placeholder NPC to confirm transition worked
+      const insiderPos = MapManager.getInstance().getObjectPosition('Insider') || new Phaser.Math.Vector2(540, 250);
+      const insider = this.add.circle(insiderPos.x, insiderPos.y, 16, 0x00ccff);
+      this.locationObjects.push(insider);
+      this.physics.add.existing(insider);
+      const iBody = insider.body as Phaser.Physics.Arcade.Body;
+      iBody.setImmovable(true);
+
+      this.physics.add.overlap(this.player, insider, () => {
+          if (this.isDialogueOpen) return;
+          this.canInteract = true;
+          this.interactAction = () => {
+              // For now, just a quick prologue node as placeholder interaction
+              this.startDialogue('prologue', 'prologue_mother_notice');
+          };
+      });
+
+      // Light patrol
+      const patrolPath = [
+          new Phaser.Math.Vector2(200, 400),
+          new Phaser.Math.Vector2(600, 400)
+      ];
+      this.patrols.push(new Patrol(this, 200, 400, patrolPath));
   }
 
   private startDialogue(fileKey: string, nodeId: string) {

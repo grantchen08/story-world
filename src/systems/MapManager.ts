@@ -4,6 +4,7 @@ export class MapManager {
     private static instance: MapManager;
     private map!: Phaser.Tilemaps.Tilemap;
     private layers: Map<string, Phaser.Tilemaps.TilemapLayer> = new Map();
+    private currentKey: string | null = null;
     
     private constructor() {}
 
@@ -32,7 +33,16 @@ export class MapManager {
     }
 
     loadMap(scene: Phaser.Scene, key: string) {
+        // Cleanup previous layers (if any)
+        if (this.currentKey) {
+            for (const layer of this.layers.values()) {
+                layer.destroy();
+            }
+            this.layers.clear();
+        }
+
         this.map = scene.make.tilemap({ key });
+        this.currentKey = key;
         
         // The first argument is the name of the tileset in Tiled
         // The second argument is the key of the image loaded in Phaser
@@ -78,6 +88,16 @@ export class MapManager {
             return new Phaser.Math.Vector2(spawn.x, spawn.y);
         }
         return null;
+    }
+
+    getObjectPosition(name: string, layerName: string = 'Objects'): Phaser.Math.Vector2 | null {
+        const objectLayer = this.map.getObjectLayer(layerName);
+        if (!objectLayer) return null;
+
+        const obj = objectLayer.objects.find(o => o.name === name);
+        if (!obj) return null;
+
+        return new Phaser.Math.Vector2(obj.x, obj.y);
     }
 
     getCollisionLayer(): Phaser.Tilemaps.TilemapLayer | undefined {
