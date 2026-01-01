@@ -45,13 +45,16 @@ export class GameScene extends Phaser.Scene {
 
     const gs = GameState.getInstance();
 
-    // Start main quest once prologue is completed
-    QuestSystem.getInstance().ensureQuestStarted('quest_main_started', 'main_arc');
     // If we start GameScene directly (boot), default into village
     if (gs.getCurrentLocation().startsWith('prologue')) {
         gs.setCurrentLocation('village_square');
+        // Starting from the boot flow skips prologue; still start the main quest.
+        gs.setFlag('quest_main_started', true);
     }
     this.activeLocation = gs.getCurrentLocation();
+
+    // Start main quest once prologue (or boot flow) marks it started
+    QuestSystem.getInstance().ensureQuestStarted('quest_main_started', 'main_arc');
 
     // 1. Setup World
     MapManager.getInstance().init(this);
@@ -146,6 +149,9 @@ export class GameScene extends Phaser.Scene {
     if (gs.getCurrentLocation() !== this.activeLocation) {
         this.transitionToLocation(gs.getCurrentLocation());
     }
+
+    // If the quest-start flag is set later (e.g. after prologue), start it reliably.
+    QuestSystem.getInstance().ensureQuestStarted('quest_main_started', 'main_arc');
 
     // Keep quest progression in sync with state/flags
     QuestSystem.getInstance().update();

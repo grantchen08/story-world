@@ -237,3 +237,6 @@ Reference text is in `docs/reference_story_en.md`.
 - **v0.1.8**:
   - Add a minimal **Quest System** (JSON-driven) and persist quest state in saves.
   - Drive the Objective HUD from the active quest step.
+
+- **v0.1.9**:
+  - Fix quest start so the Objective HUD updates reliably (boot flow and post-prologue).
