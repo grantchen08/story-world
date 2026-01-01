@@ -251,3 +251,8 @@ Reference text is in `docs/reference_story_en.md`.
 
 - **v0.1.9**:
   - Fix quest start so the Objective HUD updates reliably (boot flow and post-prologue).
+
+- **v0.1.10**:
+  - **Visual Polish**: Added pixel-perfect rendering, lighting overlays, and time-of-day/Heat atmosphere.
+  - **Procedural Sprites**: Replaced placeholder circles with generated pixel-art characters (Player, Guard, NPCs).
+  - **Feedback**: Added screen shake and flash on stealth detection.
