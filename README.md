@@ -133,6 +133,7 @@ Build a playable 10-15 minute slice before expanding:
 ## Development plan (staged)
 
 Stage 0 is captured in `docs/stage-0-alignment.md`.
+Stage 1 is captured in `docs/stage-1-narrative-content.md`.
 
 ### Stage 0 - Alignment
 
