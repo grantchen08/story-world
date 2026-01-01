@@ -3,6 +3,8 @@ import { GameScene } from './scenes/GameScene';
 import { UIScene } from './scenes/UIScene';
 import { ForgeryScene } from './scenes/ForgeryScene';
 import { RecordsScene } from './scenes/RecordsScene';
+import { RitualScene } from './scenes/RitualScene';
+import { FinalScene } from './scenes/FinalScene';
 
 // Define a simple BootScene to start
 class BootScene extends Phaser.Scene {
@@ -50,7 +52,7 @@ const config: Phaser.Types.Core.GameConfig = {
       debug: false
     }
   },
-  scene: [BootScene, GameScene, UIScene, ForgeryScene, RecordsScene]
+  scene: [BootScene, GameScene, UIScene, ForgeryScene, RecordsScene, RitualScene, FinalScene]
 };
 
 new Phaser.Game(config);

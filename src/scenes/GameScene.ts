@@ -19,6 +19,7 @@ export class GameScene extends Phaser.Scene {
   private interactAction: (() => void) | null = null;
   private interactExpiresAt: number = 0;
   private lastChapter2Unlocked: boolean | null = null;
+  private lastPalaceUnlocked: boolean | null = null;
 
   constructor() {
     super('GameScene');
@@ -29,6 +30,7 @@ export class GameScene extends Phaser.Scene {
     this.load.tilemapTiledJSON('village', 'maps/village.json');
     this.load.tilemapTiledJSON('city_gate', 'maps/city_gate.json');
     this.load.tilemapTiledJSON('inner_city', 'maps/inner_city.json');
+    this.load.tilemapTiledJSON('palace_perimeter', 'maps/palace_perimeter.json');
   }
 
   async create() {
@@ -37,6 +39,7 @@ export class GameScene extends Phaser.Scene {
     await DialogueSystem.getInstance().loadDialogueFile('chapter1', './data/dialogue/chapter1.json');
     await DialogueSystem.getInstance().loadDialogueFile('chapter2', './data/dialogue/chapter2.json');
     await DialogueSystem.getInstance().loadDialogueFile('chapter3', './data/dialogue/chapter3.json');
+    await DialogueSystem.getInstance().loadDialogueFile('chapter4', './data/dialogue/chapter4.json');
 
     const gs = GameState.getInstance();
     // If we start GameScene directly (boot), default into village
@@ -166,6 +169,25 @@ export class GameScene extends Phaser.Scene {
         }
     }
 
+    // Live-refresh inner-city palace exit marker/label after unlocking route
+    if (this.activeLocation === 'inner_city') {
+        const palaceUnlocked = gs.hasFlag('palace_route_unlocked');
+        if (this.lastPalaceUnlocked !== palaceUnlocked) {
+            this.lastPalaceUnlocked = palaceUnlocked;
+            for (const obj of this.locationObjects) {
+                if ((obj as any).getData && (obj as any).getData('ui') === 'palace_label') {
+                    const label = obj as Phaser.GameObjects.Text;
+                    label.setText(palaceUnlocked ? 'Palace →' : 'Palace (locked)');
+                    label.setColor(palaceUnlocked ? '#ffffff' : '#bbbbbb');
+                }
+                if ((obj as any).getData && (obj as any).getData('ui') === 'palace_marker') {
+                    const marker = obj as Phaser.GameObjects.Rectangle;
+                    marker.setFillStyle(palaceUnlocked ? 0x888888 : 0x444444, 1);
+                }
+            }
+        }
+    }
+
     // Expire stale interactions (prevents interacting far away)
     if (time > this.interactExpiresAt) {
         this.canInteract = false;
@@ -234,6 +256,7 @@ export class GameScene extends Phaser.Scene {
   private mapKeyForLocation(location: string): string {
       if (location === 'city_gate') return 'city_gate';
       if (location === 'inner_city') return 'inner_city';
+      if (location === 'palace_perimeter') return 'palace_perimeter';
       return 'village';
   }
 
@@ -247,6 +270,7 @@ export class GameScene extends Phaser.Scene {
       this.interactAction = null;
       this.interactExpiresAt = 0;
       this.lastChapter2Unlocked = null;
+      this.lastPalaceUnlocked = null;
   }
 
   private transitionToLocation(newLocation: string) {
@@ -287,6 +311,10 @@ export class GameScene extends Phaser.Scene {
       }
       if (location === 'inner_city') {
           this.setupInnerCity();
+          return;
+      }
+      if (location === 'palace_perimeter') {
+          this.setupPalacePerimeter();
           return;
       }
       this.setupVillage();
@@ -497,6 +525,126 @@ export class GameScene extends Phaser.Scene {
           new Phaser.Math.Vector2(600, 400)
       ];
       this.patrols.push(new Patrol(this, 200, 400, patrolPath));
+
+      // Exit to Palace (unlocks after palace_route_unlocked)
+      const exitPos = new Phaser.Math.Vector2(620, 96);
+      const exitVisual = this.add.rectangle(exitPos.x, exitPos.y, 150, 30, 0x444444);
+      exitVisual.setData('ui', 'palace_marker');
+      this.locationObjects.push(exitVisual);
+      const exitLabel = this.add.text(exitPos.x, exitPos.y, 'Palace (locked)', { fontSize: '14px', color: '#bbbbbb', backgroundColor: '#000000aa' })
+        .setOrigin(0.5);
+      exitLabel.setData('ui', 'palace_label');
+      this.locationObjects.push(exitLabel);
+
+      const exitZone = this.add.zone(exitPos.x, exitPos.y, 180, 60);
+      this.locationObjects.push(exitZone);
+      this.physics.add.existing(exitZone);
+      const ezBody = exitZone.body as Phaser.Physics.Arcade.Body;
+      ezBody.setAllowGravity(false);
+      ezBody.setImmovable(true);
+
+      this.physics.add.overlap(this.player, exitZone, () => {
+          if (this.isDialogueOpen) return;
+          if (!GameState.getInstance().hasFlag('palace_route_unlocked')) return;
+          this.canInteract = true;
+          this.interactAction = () => {
+              GameState.getInstance().setCurrentLocation('palace_perimeter');
+          };
+          this.interactExpiresAt = this.time.now + 150;
+      });
+  }
+
+  private setupPalacePerimeter() {
+      // Wall / label
+      const wall = this.add.rectangle(400, 40, 800, 100, 0x2a2a2a);
+      this.locationObjects.push(wall);
+      const label = this.add.text(400, 20, 'PALACE PERIMETER', { fontSize: '18px', color: '#ffffff', backgroundColor: '#00000055' }).setOrigin(0.5);
+      this.locationObjects.push(label);
+
+      // Optional Chapter 4 intro dialogue trigger
+      if (!GameState.getInstance().hasFlag('chapter4_seen')) {
+          GameState.getInstance().setFlag('chapter4_seen', true);
+          // Show once on entry
+          this.time.delayedCall(250, () => {
+              if (!this.isDialogueOpen) this.startDialogue('chapter4', 'c4_start');
+          });
+      }
+
+      // Ritual spot
+      const ritualPos = MapManager.getInstance().getObjectPosition('RitualSpot') || new Phaser.Math.Vector2(360, 360);
+      const ritualVisual = this.add.rectangle(ritualPos.x + 16, ritualPos.y + 16, 60, 40, 0xffaa00, 0.5);
+      this.locationObjects.push(ritualVisual);
+      const ritualLabel = this.add.text(ritualPos.x + 16, ritualPos.y + 44, 'Ritual', { fontSize: '12px', color: '#ffffff' }).setOrigin(0.5);
+      this.locationObjects.push(ritualLabel);
+
+      const ritualZone = this.add.zone(ritualPos.x + 16, ritualPos.y + 16, 80, 60);
+      this.locationObjects.push(ritualZone);
+      this.physics.add.existing(ritualZone);
+      const rzBody = ritualZone.body as Phaser.Physics.Arcade.Body;
+      rzBody.setAllowGravity(false);
+      rzBody.setImmovable(true);
+
+      this.physics.add.overlap(this.player, ritualZone, () => {
+          if (this.isDialogueOpen) return;
+          if (GameState.getInstance().hasFlag('ritual_done')) return;
+          this.canInteract = true;
+          this.interactAction = () => {
+              this.scene.pause();
+              this.scene.launch('RitualScene');
+          };
+          this.interactExpiresAt = this.time.now + 150;
+      });
+
+      // Confrontation zone -> Final
+      const confPos = MapManager.getInstance().getObjectPosition('Confrontation') || new Phaser.Math.Vector2(320, 80);
+      const confHint = this.add.rectangle(confPos.x + 80, confPos.y + 32, 160, 64, 0xff0000, 0.12);
+      this.locationObjects.push(confHint);
+      const confLabel = this.add.text(confPos.x + 80, confPos.y + 32, 'Confrontation', { fontSize: '12px', color: '#ffffff', backgroundColor: '#000000aa' }).setOrigin(0.5);
+      this.locationObjects.push(confLabel);
+
+      const confZone = this.add.zone(confPos.x + 80, confPos.y + 32, 180, 90);
+      this.locationObjects.push(confZone);
+      this.physics.add.existing(confZone);
+      const czBody = confZone.body as Phaser.Physics.Arcade.Body;
+      czBody.setAllowGravity(false);
+      czBody.setImmovable(true);
+
+      this.physics.add.overlap(this.player, confZone, () => {
+          if (this.isDialogueOpen) return;
+          if (!GameState.getInstance().hasFlag('ritual_done')) return;
+          this.canInteract = true;
+          this.interactAction = () => {
+              this.scene.pause();
+              this.scene.launch('FinalScene');
+          };
+          this.interactExpiresAt = this.time.now + 150;
+      });
+
+      // Patrols scale with Heat
+      const heat = GameState.getInstance().getStats().heat;
+      const basePath = [
+          new Phaser.Math.Vector2(120, 500),
+          new Phaser.Math.Vector2(700, 500),
+          new Phaser.Math.Vector2(700, 200),
+          new Phaser.Math.Vector2(120, 200)
+      ];
+      this.patrols.push(new Patrol(this, 120, 500, basePath));
+
+      if (heat >= 30) {
+          const extraPath = [
+              new Phaser.Math.Vector2(120, 320),
+              new Phaser.Math.Vector2(700, 320)
+          ];
+          this.patrols.push(new Patrol(this, 700, 320, extraPath));
+      }
+
+      if (heat >= 60) {
+          const extraPath2 = [
+              new Phaser.Math.Vector2(200, 140),
+              new Phaser.Math.Vector2(600, 140)
+          ];
+          this.patrols.push(new Patrol(this, 600, 140, extraPath2));
+      }
   }
 
   private startDialogue(fileKey: string, nodeId: string) {

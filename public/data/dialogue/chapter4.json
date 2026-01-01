@@ -1,0 +1,30 @@
+{
+  "nodes": [
+    {
+      "id": "c4_start",
+      "speaker": "Narrator",
+      "text": "The palace wall rises like a cliff. The city’s noise fades behind you. Every step feels counted.",
+      "choices": [
+        { "text": "Continue.", "to": "c4_mercy" }
+      ]
+    },
+    {
+      "id": "c4_mercy",
+      "speaker": "Narrator",
+      "text": "A young guard coughs in the shadows—more afraid than fierce. If you silence him, you can pass. If you spare him, you risk Heat… and keep your hands clean.",
+      "choices": [
+        {
+          "text": "Spare him and slip past.",
+          "to": "exit",
+          "effects": { "add": { "heat": 5, "compassion": 5 }, "set": { "major_choice_mercy": true } }
+        },
+        {
+          "text": "Force him down and move.",
+          "to": "exit",
+          "effects": { "add": { "resolve": 5, "heat": 10 }, "set": { "major_choice_mercy": false } }
+        }
+      ]
+    }
+  ]
+}
+
