@@ -150,10 +150,11 @@ Stage 1 is captured in `docs/stage-1-narrative-content.md`.
 - Deliverables: Phaser skeleton, world state (flags + stats + time), save/load, Tiled map loading, trigger zones, dialogue UI.
 - Exit criteria: a blank map is playable and all systems function end-to-end.
 
-### Stage 3 - Vertical slice
+### Stage 3 - Vertical slice (In Progress)
 
 - Deliverables: the MVP slice above, polished enough for playtests.
-- Exit criteria: players can finish without guidance; content can be iterated without code changes.
+- Status: Dialogue System loaded; Prologue script implemented; UI connected.
+- Next: Tiled Map implementation + Stealth Prototype.
 
 ### Stage 4 - Production (full game content)
 
