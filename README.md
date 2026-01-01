@@ -135,17 +135,17 @@ Build a playable 10-15 minute slice before expanding:
 Stage 0 is captured in `docs/stage-0-alignment.md`.
 Stage 1 is captured in `docs/stage-1-narrative-content.md`.
 
-### Stage 0 - Alignment
+### Stage 0 - Alignment (Complete)
 
 - Deliverables: 1-page vision, target playtime, art style, scope cap, definition of done.
 - Exit criteria: decisions locked for combat (none), core verbs, endings count.
 
-### Stage 1 - Narrative + content design
+### Stage 1 - Narrative + content design (Complete)
 
 - Deliverables: chapter outline, scene list, NPC list, key choices and consequences, endings matrix.
 - Output: dialogue/quests written in a structured schema (JSON/YAML) with flags/conditions/effects.
 
-### Stage 2 - Technical foundation
+### Stage 2 - Technical foundation (Complete)
 
 - Deliverables: Phaser skeleton, world state (flags + stats + time), save/load, Tiled map loading, trigger zones, dialogue UI.
 - Exit criteria: a blank map is playable and all systems function end-to-end.
