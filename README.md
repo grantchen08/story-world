@@ -134,6 +134,7 @@ Build a playable 10-15 minute slice before expanding:
 
 Stage 0 is captured in `docs/stage-0-alignment.md`.
 Stage 1 is captured in `docs/stage-1-narrative-content.md`.
+Reference text is in `docs/reference_story_en.md`.
 
 ### Stage 0 - Alignment (Complete)
 
