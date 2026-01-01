@@ -10,9 +10,15 @@ class BootScene extends Phaser.Scene {
   }
 
   create() {
-    this.add.text(400, 300, 'Story World\nForging the Swords', {
+    this.add.text(400, 260, 'Story World\nForging the Swords', {
       fontSize: '32px',
       color: '#ffffff',
+      align: 'center'
+    }).setOrigin(0.5);
+
+    this.add.text(400, 330, `v${__APP_VERSION__}`, {
+      fontSize: '16px',
+      color: '#aaaaaa',
       align: 'center'
     }).setOrigin(0.5);
     

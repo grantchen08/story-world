@@ -17,6 +17,7 @@ export class GameScene extends Phaser.Scene {
   private locationObjects: Phaser.GameObjects.GameObject[] = [];
   private canInteract: boolean = false;
   private interactAction: (() => void) | null = null;
+  private interactExpiresAt: number = 0;
 
   constructor() {
     super('GameScene');
@@ -142,6 +143,12 @@ export class GameScene extends Phaser.Scene {
         return;
     }
 
+    // Expire stale interactions (prevents interacting far away)
+    if (time > this.interactExpiresAt) {
+        this.canInteract = false;
+        this.interactAction = null;
+    }
+
     // Interaction
     if (this.canInteract && this.interactAction && Phaser.Input.Keyboard.JustDown(this.interactKey)) {
         this.interactAction();
@@ -215,6 +222,7 @@ export class GameScene extends Phaser.Scene {
       this.patrols = [];
       this.canInteract = false;
       this.interactAction = null;
+      this.interactExpiresAt = 0;
   }
 
   private transitionToLocation(newLocation: string) {
@@ -270,12 +278,15 @@ export class GameScene extends Phaser.Scene {
           if (this.isDialogueOpen) return;
           this.canInteract = true;
           this.interactAction = () => this.startDialogue('chapter1', 'chapter1_start');
+          this.interactExpiresAt = this.time.now + 150;
       });
 
       // Forgery Table
       const tablePos = new Phaser.Math.Vector2(200, 200);
       const tableVisual = this.add.rectangle(tablePos.x, tablePos.y, 32, 32, 0x8b4513);
       this.locationObjects.push(tableVisual);
+      const tableLabel = this.add.text(tablePos.x, tablePos.y + 26, 'Forgery', { fontSize: '12px', color: '#ffffff' }).setOrigin(0.5);
+      this.locationObjects.push(tableLabel);
 
       const forgeryZone = this.add.zone(tablePos.x, tablePos.y, 40, 40);
       this.locationObjects.push(forgeryZone);
@@ -291,11 +302,20 @@ export class GameScene extends Phaser.Scene {
               this.scene.pause();
               this.scene.launch('ForgeryScene');
           };
+          this.interactExpiresAt = this.time.now + 150;
       });
 
       // Exit to City Gate (unlocks after forgery attempt)
-      const exitVisual = this.add.rectangle(760, 300, 24, 120, 0xaaaaaa);
+      const exitPos = new Phaser.Math.Vector2(760, 300);
+      const exitVisual = this.add.rectangle(exitPos.x, exitPos.y, 28, 160, 0x888888);
       this.locationObjects.push(exitVisual);
+      const exitLabel = this.add.text(exitPos.x - 40, exitPos.y, 'City Gate →', { fontSize: '14px', color: '#ffffff', backgroundColor: '#000000aa' })
+        .setOrigin(1, 0.5);
+      this.locationObjects.push(exitLabel);
+
+      // Only show label if unlocked
+      exitLabel.setVisible(GameState.getInstance().hasFlag('chapter2_unlocked'));
+
       const exitZone = this.add.zone(760, 300, 40, 140);
       this.locationObjects.push(exitZone);
       this.physics.add.existing(exitZone);
@@ -310,6 +330,7 @@ export class GameScene extends Phaser.Scene {
           this.interactAction = () => {
               GameState.getInstance().setCurrentLocation('city_gate');
           };
+          this.interactExpiresAt = this.time.now + 150;
       });
 
       // Patrols (basic)
@@ -323,9 +344,19 @@ export class GameScene extends Phaser.Scene {
   }
 
   private setupCityGate() {
+      // Visible gate wall/arch
+      const wall = this.add.rectangle(400, 40, 800, 100, 0x333333);
+      this.locationObjects.push(wall);
+      const arch = this.add.rectangle(400, 80, 180, 90, 0x222222);
+      this.locationObjects.push(arch);
+      const gateLabel = this.add.text(400, 20, 'CITY GATE', { fontSize: '18px', color: '#ffffff', backgroundColor: '#00000055' }).setOrigin(0.5);
+      this.locationObjects.push(gateLabel);
+
       const clerkPos = MapManager.getInstance().getObjectPosition('GateClerk') || new Phaser.Math.Vector2(540, 350);
       const clerk = this.add.circle(clerkPos.x, clerkPos.y, 16, 0xffcc00);
       this.locationObjects.push(clerk);
+      const clerkLabel = this.add.text(clerkPos.x, clerkPos.y + 26, 'Clerk', { fontSize: '12px', color: '#ffffff' }).setOrigin(0.5);
+      this.locationObjects.push(clerkLabel);
       this.physics.add.existing(clerk);
       const cBody = clerk.body as Phaser.Physics.Arcade.Body;
       cBody.setImmovable(true);
@@ -334,6 +365,7 @@ export class GameScene extends Phaser.Scene {
           if (this.isDialogueOpen) return;
           this.canInteract = true;
           this.interactAction = () => this.startDialogue('chapter2', 'gate_start');
+          this.interactExpiresAt = this.time.now + 150;
       });
 
       // Heat-driven patrol density
@@ -364,6 +396,11 @@ export class GameScene extends Phaser.Scene {
 
       // Optional: if already entered city, allow exit zone to inner city
       const toInnerPos = MapManager.getInstance().getObjectPosition('ToInnerCity') || new Phaser.Math.Vector2(400, 80);
+      const innerHint = this.add.rectangle(toInnerPos.x + 48, toInnerPos.y + 24, 96, 48, 0x00ff00, 0.15);
+      this.locationObjects.push(innerHint);
+      const innerLabel = this.add.text(toInnerPos.x + 48, toInnerPos.y + 24, 'To Inner City', { fontSize: '12px', color: '#ffffff', backgroundColor: '#000000aa' }).setOrigin(0.5);
+      this.locationObjects.push(innerLabel);
+
       const exitZone = this.add.zone(toInnerPos.x + 48, toInnerPos.y + 24, 96, 48);
       this.locationObjects.push(exitZone);
       this.physics.add.existing(exitZone);
@@ -378,6 +415,7 @@ export class GameScene extends Phaser.Scene {
           this.interactAction = () => {
               GameState.getInstance().setCurrentLocation('inner_city');
           };
+          this.interactExpiresAt = this.time.now + 150;
       });
   }
 
@@ -397,6 +435,7 @@ export class GameScene extends Phaser.Scene {
               // For now, just a quick prologue node as placeholder interaction
               this.startDialogue('prologue', 'prologue_mother_notice');
           };
+          this.interactExpiresAt = this.time.now + 150;
       });
 
       // Light patrol
