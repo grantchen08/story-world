@@ -48,7 +48,7 @@
           "to": "exit",
           "effects": {
             "add": { "heat": -5 },
-            "set": { "entered_city": true, "currentLocation": "inner_city", "currentObjective": "Find the Insider in the Inner City." }
+            "set": { "entered_city": true, "currentLocation": "inner_city" }
           }
         }
       ]
@@ -63,7 +63,7 @@
           "to": "exit",
           "effects": {
             "add": { "heat": 25 },
-            "set": { "route_official_blocked": true, "currentLocation": "inner_city", "currentObjective": "Lay low in the Inner City and find the Insider." }
+            "set": { "route_official_blocked": true, "currentLocation": "inner_city" }
           }
         }
       ]

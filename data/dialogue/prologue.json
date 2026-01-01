@@ -69,7 +69,7 @@
         {
           "text": "Take the bundle and leave.",
           "to": "exit_to_village",
-          "effects": { "set": { "currentLocation": "village_square" } }
+          "effects": { "set": { "currentLocation": "village_square", "quest_main_started": true } }
         }
       ]
     },
@@ -81,7 +81,7 @@
         {
           "text": "Take the bundle and leave.",
           "to": "exit_to_village",
-          "effects": { "set": { "currentLocation": "village_square" } }
+          "effects": { "set": { "currentLocation": "village_square", "quest_main_started": true } }
         }
       ]
     }

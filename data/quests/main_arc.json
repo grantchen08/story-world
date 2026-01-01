@@ -1,0 +1,57 @@
+{
+  "id": "main_arc",
+  "title": "Forging the Swords (Prototype Arc)",
+  "steps": [
+    {
+      "id": "talk_to_fence",
+      "objective": "Talk to the Fence.",
+      "completeWhen": { "eq": { "chapter1_active": true } }
+    },
+    {
+      "id": "forge_pass",
+      "objective": "Forge a pass at the Forgery table.",
+      "completeWhen": { "eq": { "chapter2_unlocked": true } }
+    },
+    {
+      "id": "reach_city_gate",
+      "objective": "Go to the City Gate.",
+      "completeWhen": { "eq": { "reached_city_gate": true } }
+    },
+    {
+      "id": "enter_city",
+      "objective": "Get past the checkpoint.",
+      "completeWhen": { "eq": { "entered_city": true } }
+    },
+    {
+      "id": "find_insider",
+      "objective": "Find the Insider in the Inner City.",
+      "completeWhen": { "eq": { "met_insider": true } }
+    },
+    {
+      "id": "get_proof",
+      "objective": "Search the Records for proof.",
+      "completeWhen": { "eq": { "has_proof_piece": true } }
+    },
+    {
+      "id": "return_to_insider",
+      "objective": "Return to the Insider.",
+      "completeWhen": { "eq": { "palace_route_unlocked": true } }
+    },
+    {
+      "id": "reach_palace",
+      "objective": "Reach the Palace perimeter.",
+      "completeWhen": { "eq": { "chapter4_seen": true } }
+    },
+    {
+      "id": "do_ritual",
+      "objective": "Complete the ritual at the marked spot.",
+      "completeWhen": { "eq": { "ritual_done": true } }
+    },
+    {
+      "id": "confrontation",
+      "objective": "Go to the Confrontation.",
+      "completeWhen": { "eq": { "final_seen": true } }
+    }
+  ]
+}
+

@@ -34,7 +34,7 @@
         {
           "text": "Got it. Red Phoenix.",
           "to": "exit",
-          "effects": { "set": { "chapter1_active": true, "currentObjective": "Forge a pass at the Forgery table." } }
+          "effects": { "set": { "chapter1_active": true } }
         }
       ]
     }
