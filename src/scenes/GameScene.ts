@@ -328,7 +328,8 @@ export class GameScene extends Phaser.Scene {
       });
 
       // Exit to City Gate (unlocks after forgery attempt)
-      const exitPos = new Phaser.Math.Vector2(760, 300);
+      // Keep exit within the village map bounds (20 tiles * 32px = 640px wide)
+      const exitPos = new Phaser.Math.Vector2(620, 320);
       const exitVisual = this.add.rectangle(exitPos.x, exitPos.y, 28, 160, 0x444444);
       exitVisual.setData('ui', 'city_gate_marker');
       this.locationObjects.push(exitVisual);
@@ -340,7 +341,7 @@ export class GameScene extends Phaser.Scene {
       // Always show label; update() will refresh locked/unlocked state.
       exitLabel.setVisible(true);
 
-      const exitZone = this.add.zone(760, 300, 40, 140);
+      const exitZone = this.add.zone(exitPos.x, exitPos.y, 60, 180);
       this.locationObjects.push(exitZone);
       this.physics.add.existing(exitZone);
       const ezBody = exitZone.body as Phaser.Physics.Arcade.Body;
