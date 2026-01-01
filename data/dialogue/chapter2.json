@@ -1,0 +1,72 @@
+{
+  "nodes": [
+    {
+      "id": "gate_start",
+      "speaker": "Gate Clerk",
+      "text": "Hold. Papers. The city is under watch tonight.",
+      "choices": [
+        {
+          "text": "Hand over the forged pass.",
+          "to": "gate_pass_success",
+          "conditions": { "eq": { "forgery_success": true } }
+        },
+        {
+          "text": "Hand over the forged pass.",
+          "to": "gate_pass_fail",
+          "conditions": { "eq": { "forgery_success": false } }
+        },
+        {
+          "text": "Try to talk your way through.",
+          "to": "gate_talk",
+          "conditions": { "gte": { "compassion": 30 } }
+        },
+        {
+          "text": "Back away.",
+          "to": "exit"
+        }
+      ]
+    },
+    {
+      "id": "gate_talk",
+      "speaker": "Gate Clerk",
+      "text": "Words are cheap. The guard captain wants seals, not stories.",
+      "choices": [
+        {
+          "text": "Leave.",
+          "to": "exit",
+          "effects": { "add": { "heat": 5 } }
+        }
+      ]
+    },
+    {
+      "id": "gate_pass_success",
+      "speaker": "Gate Clerk",
+      "text": "…Red Phoenix. Hmph. Go. And keep your head down.",
+      "choices": [
+        {
+          "text": "Enter the city.",
+          "to": "exit",
+          "effects": {
+            "add": { "heat": -5 },
+            "set": { "entered_city": true, "currentLocation": "inner_city" }
+          }
+        }
+      ]
+    },
+    {
+      "id": "gate_pass_fail",
+      "speaker": "Gate Clerk",
+      "text": "This seal is wrong. You think we're fools? Guards!",
+      "choices": [
+        {
+          "text": "Run (slip into the alley).",
+          "to": "exit",
+          "effects": {
+            "add": { "heat": 25 },
+            "set": { "route_official_blocked": true, "currentLocation": "inner_city" }
+          }
+        }
+      ]
+    }
+  ]
+}
