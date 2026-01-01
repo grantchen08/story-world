@@ -5,7 +5,7 @@
       "speaker": "Narrator",
       "text": "The palace wall rises like a cliff. The city’s noise fades behind you. Every step feels counted.",
       "choices": [
-        { "text": "Continue.", "to": "c4_mercy" }
+        { "text": "Continue.", "to": "c4_mercy", "effects": { "set": { "currentObjective": "Complete the ritual at the marked spot." } } }
       ]
     },
     {

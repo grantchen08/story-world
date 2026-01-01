@@ -171,7 +171,7 @@ Reference text is in `docs/reference_story_en.md`.
 - Goal: expand the prototype into the full content outlined in `docs/stage-1-narrative-content.md`.
 - Not done yet:
   - Additional locations (teahouse, back street, full records room, palace routes)
-  - Quest/objective tracking + route selection (`gate_route`)
+  - Quest system + route selection (`gate_route`)
   - Time/curfew affecting patrols/access in meaningful ways
   - 4-ending matrix with real branching content (not just a summary screen)
   - Stealth upgrades (suspicion meter, LOS vs walls, hiding/crowds, schedules)
@@ -227,3 +227,9 @@ Reference text is in `docs/reference_story_en.md`.
 - The title screen displays the current version from `package.json`.
 - When committing changes, bump patch version first:
   - `npm run bump:patch` (increments `0.1.x`)
+
+## Progress log
+
+- **v0.1.7**:
+  - Add **Objective HUD** (top-center) and wire objectives through dialogue/minigames.
+  - Make save/load **backwards-compatible** when new fields are added.

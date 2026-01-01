@@ -77,6 +77,10 @@ export class DialogueSystem {
         if (key === 'currentLocation' && typeof value === 'string') {
              gameState.setCurrentLocation(value);
         }
+        // Special case for objective updates
+        if (key === 'currentObjective' && typeof value === 'string') {
+             gameState.setCurrentObjective(value);
+        }
       }
     }
   }

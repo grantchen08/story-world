@@ -1,6 +1,6 @@
 {
   "name": "story-world",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "2D Narrative RPG based on Forging the Swords",
   "scripts": {
     "bump:patch": "npm version patch --no-git-tag-version",

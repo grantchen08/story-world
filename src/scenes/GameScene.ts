@@ -42,6 +42,11 @@ export class GameScene extends Phaser.Scene {
     await DialogueSystem.getInstance().loadDialogueFile('chapter4', './data/dialogue/chapter4.json');
 
     const gs = GameState.getInstance();
+
+    // Set a sensible default objective if none yet
+    if (!gs.getCurrentObjective()) {
+        gs.setCurrentObjective('Talk to the Fence.');
+    }
     // If we start GameScene directly (boot), default into village
     if (gs.getCurrentLocation().startsWith('prologue')) {
         gs.setCurrentLocation('village_square');

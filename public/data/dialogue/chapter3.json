@@ -33,7 +33,7 @@
         {
           "text": "Understood.",
           "to": "exit",
-          "effects": { "set": { "need_proof_piece": true } }
+          "effects": { "set": { "need_proof_piece": true, "currentObjective": "Search the Records for proof." } }
         }
       ]
     },
@@ -45,12 +45,12 @@
         {
           "text": "I trust you. Use it to open the route.",
           "to": "exit",
-          "effects": { "set": { "trusted_insider": true, "palace_route_unlocked": true } }
+          "effects": { "set": { "trusted_insider": true, "palace_route_unlocked": true, "currentObjective": "Reach the Palace perimeter." } }
         },
         {
           "text": "I don’t trust anyone. I’ll keep it.",
           "to": "exit",
-          "effects": { "set": { "trusted_insider": false, "palace_route_unlocked": true } }
+          "effects": { "set": { "trusted_insider": false, "palace_route_unlocked": true, "currentObjective": "Reach the Palace perimeter." } }
         }
       ]
     }

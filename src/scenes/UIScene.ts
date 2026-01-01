@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { GameState } from '../systems/GameState';
 
 export interface Choice {
   text: string;
@@ -9,12 +10,22 @@ export class UIScene extends Phaser.Scene {
   private dialogContainer!: Phaser.GameObjects.Container;
   private dialogText!: Phaser.GameObjects.Text;
   private choiceContainer!: Phaser.GameObjects.Container;
+  private objectiveText!: Phaser.GameObjects.Text;
+  private lastObjective: string = '';
 
   constructor() {
     super('UIScene');
   }
 
   create() {
+    // Objective HUD (top center)
+    this.objectiveText = this.add.text(400, 10, '', {
+      fontSize: '14px',
+      color: '#ffffff',
+      backgroundColor: '#000000aa',
+      padding: { x: 8, y: 4 }
+    }).setOrigin(0.5, 0);
+
     // Dialog Box Background
     const rect = this.add.rectangle(400, 500, 700, 150, 0x000000, 0.8);
     rect.setStrokeStyle(2, 0xffffff);
@@ -36,6 +47,15 @@ export class UIScene extends Phaser.Scene {
     const game = this.scene.get('GameScene');
     game.events.on('show-dialogue', this.showDialogue, this);
     game.events.on('hide-dialogue', this.hideDialogue, this);
+  }
+
+  update() {
+    const objective = GameState.getInstance().getCurrentObjective();
+    if (objective !== this.lastObjective) {
+      this.lastObjective = objective;
+      this.objectiveText.setText(objective ? `Objective: ${objective}` : '');
+      this.objectiveText.setVisible(!!objective);
+    }
   }
 
   public showDialogue(data: { text: string, choices: Choice[] }) {

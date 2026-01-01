@@ -9,6 +9,7 @@ export class FinalScene extends Phaser.Scene {
   create() {
     const gs = GameState.getInstance();
     const stats = gs.getStats();
+    gs.setCurrentObjective(''); // End of run
 
     this.add.rectangle(400, 300, 800, 600, 0x000000, 0.9);
 

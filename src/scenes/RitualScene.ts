@@ -99,6 +99,7 @@ export class RitualScene extends Phaser.Scene {
     const gs = GameState.getInstance();
     gs.setFlag('ritual_done', true);
     gs.setFlag('ritual_success', success);
+    gs.setCurrentObjective('Go to the Confrontation.');
 
     if (success) {
       gs.updateStat('resolve', 5);

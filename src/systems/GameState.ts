@@ -16,6 +16,7 @@ export interface GameData {
   flags: Record<string, boolean>;
   inventory: string[];
   currentLocation: string;
+  currentObjective: string;
 }
 
 const INITIAL_DATA: GameData = {
@@ -27,7 +28,8 @@ const INITIAL_DATA: GameData = {
   time: TimeOfDay.Night, // Starts at night in Prologue
   flags: {},
   inventory: [],
-  currentLocation: 'prologue_home'
+  currentLocation: 'prologue_home',
+  currentObjective: 'Begin the story.'
 };
 
 export class GameState {
@@ -100,6 +102,15 @@ export class GameState {
     this.data.currentLocation = location;
   }
 
+  // --- Objectives ---
+  public getCurrentObjective(): string {
+    return this.data.currentObjective;
+  }
+
+  public setCurrentObjective(objective: string) {
+    this.data.currentObjective = objective;
+  }
+
   // --- Persistence ---
   public save() {
     localStorage.setItem('story-world-save', JSON.stringify(this.data));
@@ -110,7 +121,15 @@ export class GameState {
     const saveStr = localStorage.getItem('story-world-save');
     if (saveStr) {
       try {
-        this.data = JSON.parse(saveStr);
+        const loaded = JSON.parse(saveStr) as Partial<GameData>;
+        // Backwards-compatible merge (older saves may miss new fields)
+        this.data = {
+          ...JSON.parse(JSON.stringify(INITIAL_DATA)),
+          ...loaded,
+          stats: { ...INITIAL_DATA.stats, ...(loaded.stats ?? {}) },
+          flags: { ...(loaded.flags ?? {}) },
+          inventory: Array.isArray(loaded.inventory) ? loaded.inventory : []
+        };
         console.log('Game Loaded', this.data);
         return true;
       } catch (e) {
