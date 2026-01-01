@@ -151,12 +151,6 @@ Reference text is in `docs/reference_story_en.md`.
 - Deliverables: Phaser skeleton, world state (flags + stats + time), save/load, Tiled map loading, trigger zones, dialogue UI.
 - Exit criteria: a blank map is playable and all systems function end-to-end.
 
-### Stage 3 - Vertical slice (In Progress)
-
-- Deliverables: the MVP slice above, polished enough for playtests.
-- Status: Dialogue System loaded; Prologue script implemented; UI connected; Tiled Map System implemented; Stealth/Patrol Prototype implemented.
-- Next: Implement Puzzle Mechanic (Forging/Forgery) and connect Chapter 1 content.
-
 ### Stage 3 - Vertical Slice (Complete)
 
 - Deliverables: Playable MVP slice.
@@ -164,16 +158,23 @@ Reference text is in `docs/reference_story_en.md`.
     - **Dialogue System**: Loading external JSON, conditional choices, stat/flag effects.
     - **Map System**: Tiled JSON loading, collision, camera follow.
     - **Stealth**: Patrols with vision cones, Heat accumulation mechanics.
-    - **Minigame**: Forgery scene (drag-and-drop puzzle) affecting Heat.
-    - **Narrative**: Prologue + Chapter 1 setup (Meet Fence -> Get Clue -> Forge Pass).
+    - **Minigames**:
+      - Forgery (drag-and-drop) affecting Heat
+      - Records “proof” puzzle with timer + Heat pressure
+      - Ritual timing minigame (SPACE-in-zone) affecting flags/stats
+    - **Narrative (prototype arc)**:
+      - Prologue → Chapter 1 (Fence + Forgery) → Chapter 2 (City Gate) → Chapter 3 (Inner City + Insider + Records) → Chapter 4 (Palace Perimeter + Ritual) → Final outcome screen
     - **Persistence**: Basic Save/Load.
 
 ### Stage 4 - Production (In Progress)
 
-### Stage 4 - Production (full game content)
-
-- Deliverables: all chapters implemented (maps, NPCs, quests), all set-pieces, patrol schedules, codex/notes.
-- Exit criteria: full game playable start-to-finish (placeholder art/audio acceptable).
+- Goal: expand the prototype into the full content outlined in `docs/stage-1-narrative-content.md`.
+- Not done yet:
+  - Additional locations (teahouse, back street, full records room, palace routes)
+  - Quest/objective tracking + route selection (`gate_route`)
+  - Time/curfew affecting patrols/access in meaningful ways
+  - 4-ending matrix with real branching content (not just a summary screen)
+  - Stealth upgrades (suspicion meter, LOS vs walls, hiding/crowds, schedules)
 
 ### Stage 5 - Alpha
 
@@ -204,3 +205,25 @@ Reference text is in `docs/reference_story_en.md`.
 - More chapters/locations; additional endings
 - "Codex" that unlocks via exploration and influences dialogue checks
 - Accessibility: speed controls, font scaling, colorblind-safe palettes
+
+---
+
+## Current prototype content (at a glance)
+
+- **Locations/maps**:
+  - Village (`public/maps/village.json`)
+  - City Gate (`public/maps/city_gate.json`)
+  - Inner City (`public/maps/inner_city.json`)
+  - Palace Perimeter (`public/maps/palace_perimeter.json`)
+- **Content files**: `public/data/dialogue/` (`prologue.json`, `chapter1.json`, `chapter2.json`, `chapter3.json`, `chapter4.json`)
+- **Minigames**:
+  - `src/scenes/ForgeryScene.ts`
+  - `src/scenes/RecordsScene.ts`
+  - `src/scenes/RitualScene.ts`
+  - Final outcome: `src/scenes/FinalScene.ts`
+
+## Versioning
+
+- The title screen displays the current version from `package.json`.
+- When committing changes, bump patch version first:
+  - `npm run bump:patch` (increments `0.1.x`)
