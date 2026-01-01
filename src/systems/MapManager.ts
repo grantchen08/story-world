@@ -61,6 +61,14 @@ export class MapManager {
         scene.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
     }
 
+    getMapWidth(): number {
+        return this.map ? this.map.widthInPixels : 1600;
+    }
+
+    getMapHeight(): number {
+        return this.map ? this.map.heightInPixels : 1200;
+    }
+
     getSpawnPoint(name: string = 'SpawnPoint'): Phaser.Math.Vector2 | null {
         const objectLayer = this.map.getObjectLayer('Objects');
         if (!objectLayer) return null;

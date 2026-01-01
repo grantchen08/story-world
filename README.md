@@ -157,6 +157,19 @@ Reference text is in `docs/reference_story_en.md`.
 - Status: Dialogue System loaded; Prologue script implemented; UI connected; Tiled Map System implemented; Stealth/Patrol Prototype implemented.
 - Next: Implement Puzzle Mechanic (Forging/Forgery) and connect Chapter 1 content.
 
+### Stage 3 - Vertical Slice (Complete)
+
+- Deliverables: Playable MVP slice.
+- Features Implemented:
+    - **Dialogue System**: Loading external JSON, conditional choices, stat/flag effects.
+    - **Map System**: Tiled JSON loading, collision, camera follow.
+    - **Stealth**: Patrols with vision cones, Heat accumulation mechanics.
+    - **Minigame**: Forgery scene (drag-and-drop puzzle) affecting Heat.
+    - **Narrative**: Prologue + Chapter 1 setup (Meet Fence -> Get Clue -> Forge Pass).
+    - **Persistence**: Basic Save/Load.
+
+### Stage 4 - Production (In Progress)
+
 ### Stage 4 - Production (full game content)
 
 - Deliverables: all chapters implemented (maps, NPCs, quests), all set-pieces, patrol schedules, codex/notes.

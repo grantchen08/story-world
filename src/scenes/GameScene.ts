@@ -25,6 +25,7 @@ export class GameScene extends Phaser.Scene {
   async create() {
     // 0. Load Data
     await DialogueSystem.getInstance().loadDialogueFile('prologue', './data/dialogue/prologue.json');
+    await DialogueSystem.getInstance().loadDialogueFile('chapter1', './data/dialogue/chapter1.json');
 
     // 1. Setup World
     MapManager.getInstance().init(this);
@@ -43,6 +44,17 @@ export class GameScene extends Phaser.Scene {
         this.physics.add.collider(this.player, walls);
     }
 
+    // Fence NPC
+    const fence = this.add.circle(600, 200, 16, 0x00ff00); // Green NPC
+    this.physics.add.existing(fence);
+    const fenceBody = fence.body as Phaser.Physics.Arcade.Body;
+    fenceBody.setImmovable(true);
+    this.physics.add.collider(this.player, fence, () => {
+         if (!this.isDialogueOpen) {
+             this.startDialogue('chapter1', 'chapter1_start');
+         }
+    });
+
     // 2.5 Setup Patrols
     const patrolPath = [
         new Phaser.Math.Vector2(300, 300),
@@ -54,7 +66,7 @@ export class GameScene extends Phaser.Scene {
     this.patrols.push(patrol);
 
     // 3. Setup Camera
-    this.cameras.main.setBounds(0, 0, 1600, 1200);
+    this.cameras.main.setBounds(0, 0, MapManager.getInstance().getMapWidth(), MapManager.getInstance().getMapHeight());
     this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
 
     // 4. Setup Input
@@ -87,6 +99,12 @@ export class GameScene extends Phaser.Scene {
                 this.startDialogue('prologue', 'prologue_start');
             }
         });
+        
+        // Trigger Forgery Minigame (Debug or Interaction)
+        this.input.keyboard.on('keydown-F', () => {
+            this.scene.pause();
+            this.scene.launch('ForgeryScene');
+        });
     }
 
     // 5. Setup UI
@@ -96,9 +114,27 @@ export class GameScene extends Phaser.Scene {
         backgroundColor: '#000000'
     }).setScrollFactor(0);
     
+    // 6. Setup Interactive Zones/Objects
+    // Forgery Table in Village
+    const forgeryZone = this.add.zone(200, 200, 40, 40);
+    this.physics.add.existing(forgeryZone);
+    const fzBody = forgeryZone.body as Phaser.Physics.Arcade.Body;
+    fzBody.setAllowGravity(false);
+    
+    // Add visual marker for table
+    this.add.rectangle(200, 200, 32, 32, 0x8B4513); // Brown table
+    
+    this.physics.add.overlap(this.player, forgeryZone, () => {
+        // Show interaction prompt
+        if (!this.isDialogueOpen) {
+             // We can just use the UI update to show context, or a separate hint
+             // For now, rely on the static text instructions, but maybe flash a message?
+        }
+    });
+    
     this.updateUI();
     
-    this.add.text(10, 500, 'WASD to move\nT: Start Prologue\nR/H: Stats, S/L: Save/Load', {
+    this.add.text(10, 500, 'WASD to move\nT: Prologue, F: Forgery\nR/H: Stats, S/L: Save/Load', {
          fontSize: '14px',
          color: '#ffff00',
          backgroundColor: '#000000aa'

@@ -1,0 +1,42 @@
+{
+  "nodes": [
+    {
+      "id": "chapter1_start",
+      "speaker": "Fence",
+      "text": "So, you want to get into the city? The guards are checking everyone. You'll need a pass.",
+      "choices": [
+        {
+          "text": "Can you make me one?",
+          "to": "c1_offer"
+        },
+        {
+          "text": "I'll find another way.",
+          "to": "exit"
+        }
+      ]
+    },
+    {
+      "id": "c1_offer",
+      "speaker": "Fence",
+      "text": "I have the blank papers and the seals. But my hands... they shake too much these days. You do it.",
+      "choices": [
+        {
+          "text": "What do I need to do?",
+          "to": "c1_instruction"
+        }
+      ]
+    },
+    {
+      "id": "c1_instruction",
+      "speaker": "Fence",
+      "text": "Listen carefully. Today is the Emperor's birthday. The guards will only accept passes with the 'Red Phoenix' seal. Anything else will get you arrested.",
+      "choices": [
+        {
+          "text": "Got it. Red Phoenix.",
+          "to": "exit",
+          "effects": { "set": { "chapter1_active": true } }
+        }
+      ]
+    }
+  ]
+}
