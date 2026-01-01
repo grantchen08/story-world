@@ -154,8 +154,8 @@ Reference text is in `docs/reference_story_en.md`.
 ### Stage 3 - Vertical slice (In Progress)
 
 - Deliverables: the MVP slice above, polished enough for playtests.
-- Status: Dialogue System loaded; Prologue script implemented; UI connected.
-- Next: Tiled Map implementation + Stealth Prototype.
+- Status: Dialogue System loaded; Prologue script implemented; UI connected; Tiled Map System implemented; Stealth/Patrol Prototype implemented.
+- Next: Implement Puzzle Mechanic (Forging/Forgery) and connect Chapter 1 content.
 
 ### Stage 4 - Production (full game content)
 

@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { GameState } from '../systems/GameState';
 import { DialogueSystem } from '../systems/DialogueSystem';
+import { MapManager } from '../systems/MapManager';
+import { Patrol } from '../objects/Patrol';
 
 export class GameScene extends Phaser.Scene {
   private player!: Phaser.GameObjects.Arc;
@@ -8,29 +10,49 @@ export class GameScene extends Phaser.Scene {
   private speed: number = 200;
   private stateText!: Phaser.GameObjects.Text;
   private isDialogueOpen: boolean = false;
+  private patrols: Patrol[] = [];
+  private detectionTimer: number = 0;
 
   constructor() {
     super('GameScene');
   }
 
   preload() {
-    // Determine loading strategy. For now, we can just fetch via DialogueSystem in create
+    // Load map
+    this.load.tilemapTiledJSON('village', 'maps/village.json');
   }
 
   async create() {
     // 0. Load Data
     await DialogueSystem.getInstance().loadDialogueFile('prologue', './data/dialogue/prologue.json');
 
-    // 1. Setup World (Placeholder)
-    this.add.grid(0, 0, 1600, 1200, 32, 32, 0x00b9f2).setAlpha(0.2).setOrigin(0);
-    this.physics.world.setBounds(0, 0, 1600, 1200);
-
+    // 1. Setup World
+    MapManager.getInstance().init(this);
+    MapManager.getInstance().loadMap(this, 'village');
+    
     // 2. Setup Player
-    this.player = this.add.circle(400, 300, 16, 0xff0000);
+    const spawn = MapManager.getInstance().getSpawnPoint('SpawnPoint') || new Phaser.Math.Vector2(400, 300);
+    this.player = this.add.circle(spawn.x, spawn.y, 16, 0xff0000);
     this.physics.add.existing(this.player);
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     body.setCollideWorldBounds(true);
     
+    // Add collision with map
+    const walls = MapManager.getInstance().getCollisionLayer();
+    if (walls) {
+        this.physics.add.collider(this.player, walls);
+    }
+
+    // 2.5 Setup Patrols
+    const patrolPath = [
+        new Phaser.Math.Vector2(300, 300),
+        new Phaser.Math.Vector2(500, 300),
+        new Phaser.Math.Vector2(500, 100),
+        new Phaser.Math.Vector2(300, 100)
+    ];
+    const patrol = new Patrol(this, 300, 300, patrolPath);
+    this.patrols.push(patrol);
+
     // 3. Setup Camera
     this.cameras.main.setBounds(0, 0, 1600, 1200);
     this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
@@ -87,7 +109,7 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  update() {
+  update(time: number, delta: number) {
     // Add guard clause for uninitialized player
     if (!this.player) return;
 
@@ -117,6 +139,30 @@ export class GameScene extends Phaser.Scene {
 
     if (body.velocity.x !== 0 && body.velocity.y !== 0) {
         body.velocity.normalize().scale(speed);
+    }
+
+    // Update Patrols
+    let detected = false;
+    this.patrols.forEach(patrol => {
+        patrol.update(time, delta);
+        if (patrol.canSee(this.player)) {
+            detected = true;
+            patrol.setAlert(true);
+        } else {
+            patrol.setAlert(false);
+        }
+    });
+
+    if (detected) {
+        this.detectionTimer += delta;
+        if (this.detectionTimer > 1000) { // 1 second of continuous detection
+            GameState.getInstance().updateStat('heat', 1); // Increase heat
+            this.updateUI();
+            this.detectionTimer = 0;
+            // Visual feedback could go here (screen flash, sound)
+        }
+    } else {
+        this.detectionTimer = 0;
     }
   }
 
