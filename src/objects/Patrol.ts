@@ -9,13 +9,13 @@ export class Patrol extends Phaser.GameObjects.Container {
     private visionAngle: number = Math.PI / 3; // 60 degrees
     private alertIcon: Phaser.GameObjects.Text;
 
-    constructor(scene: Phaser.Scene, x: number, y: number, path: Phaser.Math.Vector2[]) {
+    constructor(scene: Phaser.Scene, x: number, y: number, texture: string, path: Phaser.Math.Vector2[]) {
         super(scene, x, y);
 
         this.patrolPath = path;
 
         // Visual representation (Guard)
-        const body = scene.add.circle(0, 0, 12, 0x8800ff);
+        const body = scene.add.sprite(0, 0, texture);
         this.add(body);
 
         // Vision cone

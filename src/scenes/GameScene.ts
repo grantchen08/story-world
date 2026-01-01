@@ -5,9 +5,10 @@ import { MapManager } from '../systems/MapManager';
 import { QuestSystem } from '../systems/QuestSystem';
 import { Patrol } from '../objects/Patrol';
 import { TimeOfDay } from '../systems/GameState';
+import { SpriteGenerator } from '../systems/SpriteGenerator';
 
 export class GameScene extends Phaser.Scene {
-  private player!: Phaser.GameObjects.Arc;
+  private player!: Phaser.GameObjects.Sprite;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private interactKey!: Phaser.Input.Keyboard.Key;
   private speed: number = 200;
@@ -64,13 +65,34 @@ export class GameScene extends Phaser.Scene {
     MapManager.getInstance().init(this);
     MapManager.getInstance().loadMap(this, this.mapKeyForLocation(this.activeLocation));
     
+    // 1.5 Generate Sprites
+    SpriteGenerator.createHumanTexture(this, 'tex_player', {
+        hairColor: 0x222222, shirtColor: 0x3344cc, pantsColor: 0x111111 // Blue/Dark
+    });
+    SpriteGenerator.createHumanTexture(this, 'tex_guard', {
+        hairColor: 0x111111, shirtColor: 0xaa2222, pantsColor: 0x550000 // Red/DarkRed
+    });
+    SpriteGenerator.createHumanTexture(this, 'tex_citizen', {
+        hairColor: 0x554433, shirtColor: 0x667766, pantsColor: 0x443322 // Earth tones
+    });
+    SpriteGenerator.createHumanTexture(this, 'tex_clerk', {
+        hairColor: 0x888888, shirtColor: 0xddaa22, pantsColor: 0x222222 // Yellow
+    });
+    SpriteGenerator.createHumanTexture(this, 'tex_insider', {
+        hairColor: 0x333333, shirtColor: 0x44ccff, pantsColor: 0x004466 // Cyan
+    });
+
     // 2. Setup Player
     const spawn = MapManager.getInstance().getSpawnPoint('SpawnPoint') || new Phaser.Math.Vector2(400, 300);
-    this.player = this.add.circle(spawn.x, spawn.y, 16, 0xff0000);
+    this.player = this.add.sprite(spawn.x, spawn.y, 'tex_player');
     this.player.setDepth(10);
     this.physics.add.existing(this.player);
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     body.setCollideWorldBounds(true);
+    // Tweak body size for a 24x40 sprite (approx)
+    // We want the collision box to be mostly at the feet.
+    body.setSize(16, 12);
+    body.setOffset(4, 26); // Center X, Bottom Y
     
     // Add collision with map
     const walls = MapManager.getInstance().getCollisionLayer();
@@ -352,7 +374,7 @@ export class GameScene extends Phaser.Scene {
 
   private setupVillage() {
       // Fence NPC
-      const fence = this.add.circle(600, 200, 16, 0x00ff00);
+      const fence = this.add.sprite(600, 200, 'tex_citizen');
       this.locationObjects.push(fence);
       this.physics.add.existing(fence);
       const fenceBody = fence.body as Phaser.Physics.Arcade.Body;
@@ -427,7 +449,7 @@ export class GameScene extends Phaser.Scene {
           new Phaser.Math.Vector2(500, 100),
           new Phaser.Math.Vector2(300, 100)
       ];
-      this.patrols.push(new Patrol(this, 300, 300, patrolPath));
+      this.patrols.push(new Patrol(this, 300, 300, 'tex_guard', patrolPath));
   }
 
   private setupCityGate() {
@@ -440,7 +462,7 @@ export class GameScene extends Phaser.Scene {
       this.locationObjects.push(gateLabel);
 
       const clerkPos = MapManager.getInstance().getObjectPosition('GateClerk') || new Phaser.Math.Vector2(540, 350);
-      const clerk = this.add.circle(clerkPos.x, clerkPos.y, 16, 0xffcc00);
+      const clerk = this.add.sprite(clerkPos.x, clerkPos.y, 'tex_clerk');
       this.locationObjects.push(clerk);
       const clerkLabel = this.add.text(clerkPos.x, clerkPos.y + 26, 'Clerk', { fontSize: '12px', color: '#ffffff' }).setOrigin(0.5);
       this.locationObjects.push(clerkLabel);
@@ -463,14 +485,14 @@ export class GameScene extends Phaser.Scene {
           new Phaser.Math.Vector2(600, 250),
           new Phaser.Math.Vector2(200, 250)
       ];
-      this.patrols.push(new Patrol(this, 200, 450, basePath));
+      this.patrols.push(new Patrol(this, 200, 450, 'tex_guard', basePath));
 
       if (heat >= 30) {
           const extraPath = [
               new Phaser.Math.Vector2(120, 520),
               new Phaser.Math.Vector2(700, 520)
           ];
-          this.patrols.push(new Patrol(this, 120, 520, extraPath));
+          this.patrols.push(new Patrol(this, 120, 520, 'tex_guard', extraPath));
       }
 
       if (heat >= 60) {
@@ -478,7 +500,7 @@ export class GameScene extends Phaser.Scene {
               new Phaser.Math.Vector2(120, 180),
               new Phaser.Math.Vector2(700, 180)
           ];
-          this.patrols.push(new Patrol(this, 700, 180, extraPath2));
+          this.patrols.push(new Patrol(this, 700, 180, 'tex_guard', extraPath2));
       }
 
       // Optional: if already entered city, allow exit zone to inner city
@@ -509,7 +531,7 @@ export class GameScene extends Phaser.Scene {
   private setupInnerCity() {
       // Placeholder NPC to confirm transition worked
       const insiderPos = MapManager.getInstance().getObjectPosition('Insider') || new Phaser.Math.Vector2(540, 250);
-      const insider = this.add.circle(insiderPos.x, insiderPos.y, 16, 0x00ccff);
+      const insider = this.add.sprite(insiderPos.x, insiderPos.y, 'tex_insider');
       this.locationObjects.push(insider);
       this.physics.add.existing(insider);
       const iBody = insider.body as Phaser.Physics.Arcade.Body;
@@ -555,7 +577,7 @@ export class GameScene extends Phaser.Scene {
           new Phaser.Math.Vector2(200, 400),
           new Phaser.Math.Vector2(600, 400)
       ];
-      this.patrols.push(new Patrol(this, 200, 400, patrolPath));
+      this.patrols.push(new Patrol(this, 200, 400, 'tex_guard', patrolPath));
 
       // Exit to Palace (unlocks after palace_route_unlocked)
       const exitPos = new Phaser.Math.Vector2(620, 96);
@@ -659,14 +681,14 @@ export class GameScene extends Phaser.Scene {
           new Phaser.Math.Vector2(700, 200),
           new Phaser.Math.Vector2(120, 200)
       ];
-      this.patrols.push(new Patrol(this, 120, 500, basePath));
+      this.patrols.push(new Patrol(this, 120, 500, 'tex_guard', basePath));
 
       if (heat >= 30) {
           const extraPath = [
               new Phaser.Math.Vector2(120, 320),
               new Phaser.Math.Vector2(700, 320)
           ];
-          this.patrols.push(new Patrol(this, 700, 320, extraPath));
+          this.patrols.push(new Patrol(this, 700, 320, 'tex_guard', extraPath));
       }
 
       if (heat >= 60) {
@@ -674,7 +696,7 @@ export class GameScene extends Phaser.Scene {
               new Phaser.Math.Vector2(200, 140),
               new Phaser.Math.Vector2(600, 140)
           ];
-          this.patrols.push(new Patrol(this, 600, 140, extraPath2));
+          this.patrols.push(new Patrol(this, 600, 140, 'tex_guard', extraPath2));
       }
   }
 
