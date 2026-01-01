@@ -51,6 +51,7 @@ export class GameScene extends Phaser.Scene {
     // 2. Setup Player
     const spawn = MapManager.getInstance().getSpawnPoint('SpawnPoint') || new Phaser.Math.Vector2(400, 300);
     this.player = this.add.circle(spawn.x, spawn.y, 16, 0xff0000);
+    this.player.setDepth(10);
     this.physics.add.existing(this.player);
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     body.setCollideWorldBounds(true);
@@ -255,6 +256,8 @@ export class GameScene extends Phaser.Scene {
 
       const spawn = MapManager.getInstance().getSpawnPoint('SpawnPoint') || new Phaser.Math.Vector2(200, 200);
       this.player.setPosition(spawn.x, spawn.y);
+      this.player.setDepth(10);
+      this.children.bringToTop(this.player);
       const body = this.player.body as Phaser.Physics.Arcade.Body;
       body.setVelocity(0);
       body.setCollideWorldBounds(true);

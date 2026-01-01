@@ -57,6 +57,8 @@ export class MapManager {
         const groundLayer = this.map.createLayer('Ground', tileset, 0, 0);
         if (groundLayer) {
             this.layers.set('Ground', groundLayer);
+            // Ensure map renders behind actors
+            groundLayer.setDepth(-10);
         }
 
         // Try to create Walls layer if it exists
@@ -64,6 +66,7 @@ export class MapManager {
         if (wallsLayer) {
             this.layers.set('Walls', wallsLayer);
             wallsLayer.setCollisionByExclusion([-1]);
+            wallsLayer.setDepth(-5);
         }
         
         // Setup world bounds
