@@ -18,6 +18,7 @@ export class GameScene extends Phaser.Scene {
   private canInteract: boolean = false;
   private interactAction: (() => void) | null = null;
   private interactExpiresAt: number = 0;
+  private lastChapter2Unlocked: boolean | null = null;
 
   constructor() {
     super('GameScene');
@@ -143,6 +144,26 @@ export class GameScene extends Phaser.Scene {
         return;
     }
 
+    // Live-refresh village gate marker/label after forgery unlock
+    if (this.activeLocation === 'village_square') {
+        const unlocked = gs.hasFlag('chapter2_unlocked');
+        if (this.lastChapter2Unlocked !== unlocked) {
+            this.lastChapter2Unlocked = unlocked;
+            for (const obj of this.locationObjects) {
+                if ((obj as any).getData && (obj as any).getData('ui') === 'city_gate_label') {
+                    const label = obj as Phaser.GameObjects.Text;
+                    label.setVisible(true);
+                    label.setText(unlocked ? 'City Gate →' : 'City Gate (locked)');
+                    label.setColor(unlocked ? '#ffffff' : '#bbbbbb');
+                }
+                if ((obj as any).getData && (obj as any).getData('ui') === 'city_gate_marker') {
+                    const marker = obj as Phaser.GameObjects.Rectangle;
+                    marker.setFillStyle(unlocked ? 0x888888 : 0x444444, 1);
+                }
+            }
+        }
+    }
+
     // Expire stale interactions (prevents interacting far away)
     if (time > this.interactExpiresAt) {
         this.canInteract = false;
@@ -223,6 +244,7 @@ export class GameScene extends Phaser.Scene {
       this.canInteract = false;
       this.interactAction = null;
       this.interactExpiresAt = 0;
+      this.lastChapter2Unlocked = null;
   }
 
   private transitionToLocation(newLocation: string) {
@@ -307,14 +329,16 @@ export class GameScene extends Phaser.Scene {
 
       // Exit to City Gate (unlocks after forgery attempt)
       const exitPos = new Phaser.Math.Vector2(760, 300);
-      const exitVisual = this.add.rectangle(exitPos.x, exitPos.y, 28, 160, 0x888888);
+      const exitVisual = this.add.rectangle(exitPos.x, exitPos.y, 28, 160, 0x444444);
+      exitVisual.setData('ui', 'city_gate_marker');
       this.locationObjects.push(exitVisual);
       const exitLabel = this.add.text(exitPos.x - 40, exitPos.y, 'City Gate →', { fontSize: '14px', color: '#ffffff', backgroundColor: '#000000aa' })
         .setOrigin(1, 0.5);
+      exitLabel.setData('ui', 'city_gate_label');
       this.locationObjects.push(exitLabel);
 
-      // Only show label if unlocked
-      exitLabel.setVisible(GameState.getInstance().hasFlag('chapter2_unlocked'));
+      // Always show label; update() will refresh locked/unlocked state.
+      exitLabel.setVisible(true);
 
       const exitZone = this.add.zone(760, 300, 40, 140);
       this.locationObjects.push(exitZone);
