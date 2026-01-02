@@ -66,33 +66,60 @@ export class UIScene extends Phaser.Scene {
     this.dialogContainer.setVisible(true);
     this.dialogText.setText(data.text);
     
-    // Clear old choices
-    this.choiceContainer.removeAll(true);
-
-    // Create new choices
-    let yOffset = 520;
-    data.choices.forEach((choice, index) => {
-        const bg = this.add.rectangle(400, yOffset, 600, 30, 0x333333)
-            .setInteractive({ useHandCursor: true })
-            .on('pointerover', () => bg.setFillStyle(0x555555))
-            .on('pointerout', () => bg.setFillStyle(0x333333))
-            .on('pointerdown', () => {
-                choice.callback();
-                // Do NOT auto-hide; let the callback decide if we close or show next
-            });
-
-        const txt = this.add.text(400, yOffset, `${index + 1}. ${choice.text}`, {
-            fontFamily: 'monospace',
-            fontSize: '16px',
-            color: '#ffffff'
-        }).setOrigin(0.5);
-        txt.setShadow(2, 2, '#000000', 2, true, true);
-
-        this.choiceContainer.add([bg, txt]);
-        yOffset += 35;
-    });
+    // Calculate required height based on content
+    const padding = 20;
+    const textHeight = this.dialogText.height;
+    const choicesHeight = data.choices.length * 35;
+    // Calculate total height needed: text + choices + padding (top/middle/bottom)
+    const contentHeight = textHeight + choicesHeight + (padding * 2); 
+    // Minimum 150px, Maximum 250px (approx 1/2 screen)
+    const totalHeight = Phaser.Math.Clamp(contentHeight, 150, 400);
     
-    this.dialogContainer.setVisible(true);
+    // Update background rect
+    const bgRect = this.dialogContainer.list[0] as Phaser.GameObjects.Rectangle;
+    if (bgRect) {
+        bgRect.setSize(700, totalHeight);
+        
+        // Position entire box near bottom
+        // Center Y = Screen Height (600) - (Height/2) - Margin (20)
+        const centerY = 600 - (totalHeight / 2) - 20;
+        bgRect.setPosition(400, centerY);
+        
+        // Reposition text to start from top of box (relative to container center?)
+        // Actually, we need to rebuild the container layout since text is static position in create()
+        // Easier approach: Move the text object directly relative to the new box position
+        
+        // Text Y = Box Top + Padding + Text Origin Offset
+        const boxTop = centerY - (totalHeight / 2);
+        this.dialogText.setY(boxTop + padding);
+        
+        // Reposition choices below text
+        let choiceY = boxTop + padding + textHeight + padding;
+        
+        // Clear old choices
+        this.choiceContainer.removeAll(true);
+        
+        data.choices.forEach((choice, index) => {
+            const bg = this.add.rectangle(400, choiceY, 600, 30, 0x333333)
+                .setInteractive({ useHandCursor: true })
+                .on('pointerover', () => bg.setFillStyle(0x555555))
+                .on('pointerout', () => bg.setFillStyle(0x333333))
+                .on('pointerdown', () => {
+                    choice.callback();
+                });
+    
+            const txt = this.add.text(400, choiceY, `${index + 1}. ${choice.text}`, {
+                fontFamily: 'monospace',
+                fontSize: '16px',
+                color: '#ffffff'
+            }).setOrigin(0.5);
+            txt.setShadow(2, 2, '#000000', 2, true, true);
+    
+            this.choiceContainer.add([bg, txt]);
+            choiceY += 35;
+        });
+    }
+
     this.choiceContainer.setVisible(true);
   }
 

@@ -260,4 +260,5 @@ Reference text is in `docs/reference_story_en.md`.
 - **v0.1.11**:
   - **Narrative Flavor**: Integrated original "Forging the Swords" text into Prologue and map descriptions.
   - **Area Descriptions**: Added a system to trigger atmospheric narrator text when entering new maps.
+  - **UI**: Added dynamic dialogue box resizing to support longer narrative text.
   - **Documentation**: Added `docs/guide_narrative_adaptation.md` to guide future content updates.
