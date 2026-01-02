@@ -264,3 +264,5 @@ Reference text is in `docs/reference_story_en.md`.
   - **Documentation**: Added `docs/guide_narrative_adaptation.md` to guide future content updates.
   - **Redesign Plan**: Created `docs/narrative_scenes.md` to map the novel's scenes to game levels.
   - **Map Design**: Created `docs/map_design.md` detailing the 6 new maps and their quest logic.
+  - **Asset Specs**: Created `docs/asset_design_spec.md` and detailed specs for characters, tilesets, audio, and cutscenes.
+  - **Asset Placeholders**: Generated placeholder files and folder structure for all specified assets.

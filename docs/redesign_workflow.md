@@ -44,14 +44,31 @@ For each required map:
 4.  **Alternative Paths (Optional)**:
     *   If the player diverges from the novel, what happens? (Secondary priority).
 
-## Phase 3: Implementation Strategy
+## Phase 3: Asset Design & Generation
+**Goal**: Create specific visual and audio requirements based on the narrative and map designs.
+
+**Output**: `docs/asset_design_spec.md` (High-level list), `docs/specs/assets/...` (Detailed artist specs).
+
+**Process**:
+1.  **Sprite Sheets**: Define character appearances, animations, and tileset needs.
+2.  **Cut Scenes**: Outline visual storytelling requirements for key narrative moments.
+3.  **Audio**:
+    *   **BGM**: Define mood, tempo, and instrumentation for each area.
+    *   **SFX**: List required sound effects for interactions and environment.
+4.  **Artist Spec Generation**:
+    *   For each asset identified in `asset_design_spec.md`:
+        1.  Create a detailed markdown spec in `docs/specs/assets/[type]/[asset_id].md`.
+        2.  Derive details directly from `docs/reference_story_en.md`.
+        3.  Ensure consistency with the "Ancient China / Mythological" aesthetic.
+        4.  Create a placeholder file in `public/assets/[type]/[asset_id].[ext]` for immediate development use.
+
+## Phase 4: Implementation Strategy
 **Goal**: Build the redesigned game in iterative stages.
 
 **Execution Order**:
-1.  **Asset Generation**: Create/update tilesets and sprites to match the new visual descriptions.
-2.  **Map Building**: Create Tiled maps (`.json`) for each location identified in Phase 2.
-3.  **Data Entry**: Write the new `dialogue.json` and `quests.json` files using the extracted text.
-4.  **Logic Coding**:
+1.  **Map Building**: Create Tiled maps (`.json`) for each location identified in Phase 2 using assets from Phase 3.
+2.  **Data Entry**: Write the new `dialogue.json` and `quests.json` files using the extracted text.
+3.  **Logic Coding**:
     *   Implement specific puzzle mechanics (e.g., a "Waiting" mechanic, a "Digging" minigame).
     *   Wire up map transitions based on the designed conditions.
 
@@ -60,4 +77,5 @@ For each required map:
 ## Next Steps
 1.  **Execute Phase 1**: Create `docs/narrative_scenes.md` by analyzing the novel text.
 2.  **Execute Phase 2**: Create `docs/map_design.md` based on the scenes.
-3.  **Execute Phase 3**: Begin implementation of the first chapter (The Village/Bedroom).
+3.  **Execute Phase 3**: Create `docs/asset_design_spec.md` defining all required assets.
+4.  **Execute Phase 4**: Begin implementation of the first chapter (The Village/Bedroom).
