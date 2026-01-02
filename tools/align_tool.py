@@ -124,7 +124,8 @@ class SpriteAligner(tk.Tk):
         prop_frame.columnconfigure(1, weight=1)
 
         # Generate
-        ttk.Button(sidebar, text="Generate & Copy JSON", command=self.generate_json).pack(fill=tk.X, pady=10)
+        ttk.Button(sidebar, text="Generate & Copy JSON", command=self.generate_json).pack(fill=tk.X, pady=5)
+        ttk.Button(sidebar, text="Update JSON File", command=self.save_json_file).pack(fill=tk.X, pady=5)
 
         # Canvas Area
         canvas_frame = ttk.Frame(main_paned)
@@ -162,9 +163,78 @@ class SpriteAligner(tk.Tk):
             self.view_offset_x = (cw - w * self.view_scale) / 2
             self.view_offset_y = (ch - h * self.view_scale) / 2
             
+            # Load JSON if exists
+            base, _ = os.path.splitext(path)
+            json_path = base + ".json"
+            if os.path.exists(json_path):
+                self.load_animations_from_json(json_path)
+            else:
+                self.animations = []
+
+            self.refresh_list()
+            if self.animations:
+                self.select_anim(0)
+            
             self.redraw()
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load image: {e}")
+
+    def load_animations_from_json(self, json_path):
+        try:
+            with open(json_path, 'r') as f:
+                data = json.load(f)
+            
+            frames = data.get('frames', {})
+            # Group frames by prefix
+            groups = {}
+            for key, frame_data in frames.items():
+                # Assume format name_index
+                if '_' in key:
+                    parts = key.rsplit('_', 1)
+                    if len(parts) == 2 and parts[1].isdigit():
+                        name = parts[0]
+                        idx = int(parts[1])
+                        
+                        f = frame_data['frame']
+                        if name not in groups:
+                            groups[name] = []
+                        groups[name].append({'idx': idx, 'frame': f})
+            
+            self.animations = []
+            for name, frame_list in groups.items():
+                if not frame_list: continue
+                # Sort by index
+                frame_list.sort(key=lambda x: x['idx'])
+                
+                # Determine strip bounds
+                min_x = min(f['frame']['x'] for f in frame_list)
+                min_y = min(f['frame']['y'] for f in frame_list)
+                
+                # Assuming uniform sizing for now or taking max bounds
+                # To reconstruct the strip width, we need to sum widths? 
+                # Or if it's a grid... 
+                # Our tool assumes a strip.
+                # Total width = (last_x + last_w) - min_x ?
+                # Or just sum of widths if they are contiguous?
+                # Let's take (max_x + max_w) - min_x
+                max_x = max(f['frame']['x'] + f['frame']['w'] for f in frame_list)
+                max_y = max(f['frame']['y'] + f['frame']['h'] for f in frame_list)
+                
+                total_w = max_x - min_x
+                total_h = max_y - min_y
+                count = len(frame_list)
+                
+                self.animations.append({
+                    'name': name,
+                    'x': min_x,
+                    'y': min_y,
+                    'w': total_w,
+                    'h': total_h,
+                    'count': count
+                })
+                
+        except Exception as e:
+            print(f"Error loading JSON: {e}")
 
     def open_file_dialog(self):
         path = filedialog.askopenfilename(filetypes=[("Images", "*.png *.jpg *.jpeg")])
@@ -318,9 +388,9 @@ class SpriteAligner(tk.Tk):
             self.refresh_list()
             self.redraw()
 
-    def generate_json(self):
+    def generate_json_content(self):
         if not self.original_image:
-            return
+            return None
         
         frames = {}
         for anim in self.animations:
@@ -361,10 +431,32 @@ class SpriteAligner(tk.Tk):
                 "scale": "1"
             }
         }
+        return output
+
+    def generate_json(self):
+        output = self.generate_json_content()
+        if output:
+            json_str = json.dumps(output, indent=2)
+            pyperclip.copy(json_str)
+            messagebox.showinfo("Success", "JSON copied to clipboard!")
+
+    def save_json_file(self):
+        if not self.image_path:
+            return
         
-        json_str = json.dumps(output, indent=2)
-        pyperclip.copy(json_str)
-        messagebox.showinfo("Success", "JSON copied to clipboard!")
+        output = self.generate_json_content()
+        if not output:
+            return
+
+        base, _ = os.path.splitext(self.image_path)
+        json_path = base + ".json"
+        
+        try:
+            with open(json_path, 'w') as f:
+                json.dump(output, f, indent=2)
+            messagebox.showinfo("Success", f"Updated {os.path.basename(json_path)}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save JSON: {e}")
 
     # --- Mouse Events ---
     def on_mouse_down(self, event):
