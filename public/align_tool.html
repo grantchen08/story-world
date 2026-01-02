@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sprite Sheet Aligner (Strip Mode)</title>
+    <style>
+        body { margin: 0; background: #222; color: #ddd; font-family: sans-serif; display: flex; height: 100vh; overflow: hidden; }
+        #sidebar { width: 300px; background: #333; padding: 15px; display: flex; flex-direction: column; overflow-y: auto; z-index: 10; border-right: 1px solid #444; flex-shrink: 0; }
+        #canvas-wrapper { flex-grow: 1; position: relative; overflow: hidden; background: #555; display: flex; align-items: center; justify-content: center; }
+        
+        h3 { margin-top: 0; color: #fff; }
+        .control-group { margin-bottom: 20px; border-bottom: 1px solid #444; padding-bottom: 10px; }
+        label { display: block; margin-bottom: 5px; font-size: 12px; }
+        input[type="number"], input[type="text"] { width: 100%; background: #222; border: 1px solid #555; color: #fff; padding: 4px; box-sizing: border-box; margin-bottom: 5px; }
+        button { background: #4a90e2; color: white; border: none; padding: 8px; cursor: pointer; border-radius: 4px; width: 100%; margin-top: 5px; }
+        button:hover { background: #357abd; }
+        button.secondary { background: #555; margin-top: 5px; }
+        
+        .anim-btn { display: flex; align-items: center; justify-content: space-between; background: #444; margin-bottom: 2px; padding: 5px 10px; cursor: pointer; border-left: 3px solid transparent; }
+        .anim-btn:hover { background: #555; }
+        .anim-btn.active { background: #4a90e2; border-left-color: #fff; color: white; }
+        
+        #json-output { width: 100%; height: 100px; background: #111; color: #0f0; border: 1px solid #444; font-size: 10px; margin-top: 10px; resize: vertical; }
+
+        .row { display: flex; gap: 10px; align-items: center; margin-bottom: 5px; }
+        .col { flex: 1; }
+    </style>
+</head>
+<body>
+
+<div id="sidebar">
+    <h3>Sprite Aligner</h3>
+    <p style="font-size:11px; color:#aaa;">
+        1. Select Animation<br>
+        2. Drag box around ALL frames for that animation.<br>
+        3. Adjust 'Count' to split the box.<br>
+        4. Adjust box to fit sprites perfectly.
+    </p>
+
+    <div class="control-group">
+        <label>Animations</label>
+        <div id="anim-list"></div>
+        <button class="secondary" onclick="addNewAnim()">+ Add Animation</button>
+    </div>
+
+    <div id="current-anim-controls" style="display:none;">
+        <div class="control-group">
+            <label>Name</label>
+            <input type="text" id="anim-name" onchange="updateFromUI()">
+            
+            <div class="row">
+                <div class="col">
+                    <label>Total X</label>
+                    <input type="number" id="total-x" onchange="updateFromUI()">
+                </div>
+                <div class="col">
+                    <label>Total Y</label>
+                    <input type="number" id="total-y" onchange="updateFromUI()">
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col">
+                    <label>Total Width</label>
+                    <input type="number" id="total-w" onchange="updateFromUI()">
+                </div>
+                <div class="col">
+                    <label>Total Height</label>
+                    <input type="number" id="total-h" onchange="updateFromUI()">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <label>Frame Count</label>
+                    <input type="number" id="frame-count" min="1" onchange="updateFromUI()">
+                </div>
+                <div class="col">
+                    <label>Calc. Frame W</label>
+                    <input type="text" id="calc-w" disabled style="color:#aaa;">
+                </div>
+            </div>
+            
+             <button onclick="deleteAnim()" style="background:#a33;">Delete Animation</button>
+        </div>
+    </div>
+
+    <div class="control-group">
+        <button onclick="generateJson()">Generate & Copy JSON</button>
+        <textarea id="json-output"></textarea>
+    </div>
+</div>
+
+<div id="canvas-wrapper">
+    <canvas id="canvas"></canvas>
+</div>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    // Config
+    const IMG_SRC = 'assets/sprites/characters/char_black_man.png';
+    
+    // Initial guess based on the 8x3 grid known structure
+    let animations = [
+        { name: 'idle', x: 0, y: 0, w: 1408, h: 512, count: 4 },     // 352 * 4
+        { name: 'walk', x: 1408, y: 0, w: 1408, h: 512, count: 4 },
+        { name: 'combat', x: 0, y: 512, w: 1408, h: 512, count: 4 },
+        { name: 'singing', x: 1408, y: 512, w: 1408, h: 512, count: 4 },
+        { name: 'dancing', x: 0, y: 1024, w: 2816, h: 512, count: 8 } // 352 * 8
+    ];
+    
+    let selectedAnimIndex = 0;
+    let isDragging = false;
+    let dragMode = null; // 'move', 'resize-se'
+    let dragStartMouse = { x: 0, y: 0 };
+    let dragStartAnim = { x: 0, y: 0, w: 0, h: 0 };
+    
+    // Viewport transform
+    let viewScale = 0.1;
+    let viewOffset = { x: 0, y: 0 };
+
+    img.src = IMG_SRC;
+    img.onload = () => {
+        // Fit to window initially
+        const wrapper = document.getElementById('canvas-wrapper');
+        const aspect = img.width / img.height;
+        const screenAspect = wrapper.clientWidth / wrapper.clientHeight;
+        
+        if (aspect > screenAspect) {
+            viewScale = (wrapper.clientWidth - 40) / img.width;
+        } else {
+            viewScale = (wrapper.clientHeight - 40) / img.height;
+        }
+        
+        // Center
+        viewOffset.x = (wrapper.clientWidth - img.width * viewScale) / 2;
+        viewOffset.y = (wrapper.clientHeight - img.height * viewScale) / 2;
+        
+        canvas.width = wrapper.clientWidth;
+        canvas.height = wrapper.clientHeight;
+        
+        render();
+        renderAnimList();
+        loadAnimToUI(0);
+    };
+
+    window.onresize = () => {
+        const wrapper = document.getElementById('canvas-wrapper');
+        canvas.width = wrapper.clientWidth;
+        canvas.height = wrapper.clientHeight;
+        render();
+    };
+    
+    // --- Rendering ---
+
+    function toScreen(x, y) {
+        return {
+            x: x * viewScale + viewOffset.x,
+            y: y * viewScale + viewOffset.y
+        };
+    }
+
+    function toWorld(x, y) {
+        return {
+            x: (x - viewOffset.x) / viewScale,
+            y: (y - viewOffset.y) / viewScale
+        };
+    }
+
+    function render() {
+        // Background
+        ctx.fillStyle = '#2a2a2a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Image
+        const sPos = toScreen(0, 0);
+        const sSize = { w: img.width * viewScale, h: img.height * viewScale };
+        ctx.drawImage(img, sPos.x, sPos.y, sSize.w, sSize.h);
+
+        // Overlay Dimming
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(sPos.x, sPos.y, sSize.w, sSize.h);
+
+        // Animations
+        const drawAnim = (anim, idx) => {
+            const isSelected = idx === selectedAnimIndex;
+            
+            // Clear dimming for this anim
+            const pos = toScreen(anim.x, anim.y);
+            const size = { w: anim.w * viewScale, h: anim.h * viewScale };
+            
+            // Re-draw image in the selected region (to make it pop)
+            ctx.drawImage(img, anim.x, anim.y, anim.w, anim.h, pos.x, pos.y, size.w, size.h);
+
+            // Draw Box
+            ctx.strokeStyle = isSelected ? '#00ff00' : '#4a90e2';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(pos.x, pos.y, size.w, size.h);
+            
+            // Draw Resize Handles (Corners)
+            if (isSelected) {
+                ctx.fillStyle = '#00ff00';
+                const handleSize = 8;
+                // NW
+                ctx.fillRect(pos.x - handleSize/2, pos.y - handleSize/2, handleSize, handleSize);
+                // NE
+                ctx.fillRect(pos.x + size.w - handleSize/2, pos.y - handleSize/2, handleSize, handleSize);
+                // SW
+                ctx.fillRect(pos.x - handleSize/2, pos.y + size.h - handleSize/2, handleSize, handleSize);
+                // SE
+                ctx.fillRect(pos.x + size.w - handleSize/2, pos.y + size.h - handleSize/2, handleSize, handleSize);
+            }
+
+            // Draw Split Lines
+            const frameW = anim.w / anim.count;
+            ctx.strokeStyle = isSelected ? 'rgba(0, 255, 0, 0.5)' : 'rgba(74, 144, 226, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for(let i=1; i<anim.count; i++) {
+                const lineX = anim.x + (i * frameW);
+                const sLine = toScreen(lineX, anim.y);
+                ctx.moveTo(sLine.x, pos.y);
+                ctx.lineTo(sLine.x, pos.y + size.h);
+            }
+            ctx.stroke();
+
+            // Label
+            if (isSelected) {
+                ctx.fillStyle = '#00ff00';
+                ctx.font = '14px sans-serif';
+                ctx.fillText(`${anim.name} (${anim.count}f)`, pos.x, pos.y - 5);
+            }
+        };
+
+        // Draw unselected first
+        animations.forEach((anim, idx) => {
+            if (idx !== selectedAnimIndex) drawAnim(anim, idx);
+        });
+        
+        // Draw selected last (on top)
+        if (selectedAnimIndex >= 0 && selectedAnimIndex < animations.length) {
+            drawAnim(animations[selectedAnimIndex], selectedAnimIndex);
+        }
+    }
+
+    // --- Logic ---
+
+    function renderAnimList() {
+        const list = document.getElementById('anim-list');
+        list.innerHTML = '';
+        animations.forEach((anim, idx) => {
+            const div = document.createElement('div');
+            div.className = `anim-btn ${idx === selectedAnimIndex ? 'active' : ''}`;
+            div.innerText = anim.name;
+            div.onclick = () => {
+                selectedAnimIndex = idx;
+                loadAnimToUI(idx);
+                render();
+                renderAnimList();
+            };
+            list.appendChild(div);
+        });
+    }
+
+    function loadAnimToUI(idx) {
+        if (idx < 0 || idx >= animations.length) {
+            document.getElementById('current-anim-controls').style.display = 'none';
+            return;
+        }
+        const anim = animations[idx];
+        document.getElementById('current-anim-controls').style.display = 'block';
+        document.getElementById('anim-name').value = anim.name;
+        document.getElementById('total-x').value = Math.round(anim.x);
+        document.getElementById('total-y').value = Math.round(anim.y);
+        document.getElementById('total-w').value = Math.round(anim.w);
+        document.getElementById('total-h').value = Math.round(anim.h);
+        document.getElementById('frame-count').value = anim.count;
+        document.getElementById('calc-w').value = (anim.w / anim.count).toFixed(1);
+    }
+
+    function updateFromUI() {
+        const anim = animations[selectedAnimIndex];
+        anim.name = document.getElementById('anim-name').value;
+        anim.x = parseFloat(document.getElementById('total-x').value);
+        anim.y = parseFloat(document.getElementById('total-y').value);
+        anim.w = parseFloat(document.getElementById('total-w').value);
+        anim.h = parseFloat(document.getElementById('total-h').value);
+        anim.count = parseInt(document.getElementById('frame-count').value);
+        
+        document.getElementById('calc-w').value = (anim.w / anim.count).toFixed(1);
+        render();
+        renderAnimList();
+    }
+    
+    function addNewAnim() {
+        // Default to center screen
+        const wCenter = toWorld(canvas.width/2, canvas.height/2);
+        
+        animations.push({ name: 'new_anim', x: 0, y: 0, w: 352*4, h: 512, count: 4 });
+        selectedAnimIndex = animations.length - 1;
+        loadAnimToUI(selectedAnimIndex);
+        render();
+        renderAnimList();
+    }
+    
+    function deleteAnim() {
+        animations.splice(selectedAnimIndex, 1);
+        selectedAnimIndex = Math.max(0, selectedAnimIndex - 1);
+        render();
+        renderAnimList();
+        loadAnimToUI(selectedAnimIndex);
+    }
+
+    function generateJson() {
+        const frames = {};
+        
+        animations.forEach(anim => {
+            const frameW = anim.w / anim.count;
+            for(let i=0; i<anim.count; i++) {
+                const fx = anim.x + (i * frameW);
+                const fy = anim.y;
+                const name = `${anim.name}_${i}`;
+                
+                frames[name] = {
+                    frame: { x: Math.round(fx), y: Math.round(fy), w: Math.round(frameW), h: Math.round(anim.h) },
+                    rotated: false,
+                    trimmed: false,
+                    spriteSourceSize: { x: 0, y: 0, w: Math.round(frameW), h: Math.round(anim.h) },
+                    sourceSize: { w: Math.round(frameW), h: Math.round(anim.h) }
+                };
+            }
+        });
+        
+        const output = {
+            frames: frames,
+            meta: {
+                app: "SpriteAligner_Strip",
+                version: "1.0",
+                image: "char_black_man.png",
+                format: "RGBA8888",
+                size: { w: img.width, h: img.height },
+                scale: "1"
+            }
+        };
+        
+        const jsonStr = JSON.stringify(output, null, 2);
+        document.getElementById('json-output').value = jsonStr;
+        
+        navigator.clipboard.writeText(jsonStr).then(() => {
+            alert('JSON copied to clipboard!');
+        });
+    }
+
+    // --- Interaction ---
+    
+    canvas.addEventListener('mousedown', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        const worldPos = toWorld(mouseX, mouseY);
+        
+        const anim = animations[selectedAnimIndex];
+        const sPos = toScreen(anim.x, anim.y);
+        const sSize = { w: anim.w * viewScale, h: anim.h * viewScale };
+        
+        // Hit test resize handles
+        const handleSize = 12; // Hit area slightly larger
+        
+        // Helper for hit test
+        function hit(hx, hy) {
+            return mouseX >= hx - handleSize/2 && mouseX <= hx + handleSize/2 &&
+                   mouseY >= hy - handleSize/2 && mouseY <= hy + handleSize/2;
+        }
+
+        if (hit(sPos.x, sPos.y)) { dragMode = 'resize-nw'; }
+        else if (hit(sPos.x + sSize.w, sPos.y)) { dragMode = 'resize-ne'; }
+        else if (hit(sPos.x, sPos.y + sSize.h)) { dragMode = 'resize-sw'; }
+        else if (hit(sPos.x + sSize.w, sPos.y + sSize.h)) { dragMode = 'resize-se'; }
+        
+        if (dragMode) {
+            isDragging = true;
+            dragStartMouse = { x: mouseX, y: mouseY };
+            dragStartAnim = { ...anim };
+            return;
+        }
+
+        // Hit test body
+        if (worldPos.x >= anim.x && worldPos.x <= anim.x + anim.w &&
+            worldPos.y >= anim.y && worldPos.y <= anim.y + anim.h) {
+            isDragging = true;
+            dragMode = 'move';
+            dragStartMouse = { x: mouseX, y: mouseY };
+            dragStartAnim = { ...anim };
+            return;
+        }
+        
+        // Hit test other animations to select
+        for(let i=0; i<animations.length; i++) {
+            const a = animations[i];
+            if (worldPos.x >= a.x && worldPos.x <= a.x + a.w &&
+                worldPos.y >= a.y && worldPos.y <= a.y + a.h) {
+                selectedAnimIndex = i;
+                loadAnimToUI(i);
+                render();
+                renderAnimList();
+                return;
+            }
+        }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        
+        const anim = animations[selectedAnimIndex];
+        const dx = (mouseX - dragStartMouse.x) / viewScale;
+        const dy = (mouseY - dragStartMouse.y) / viewScale;
+        
+        if (dragMode === 'move') {
+            anim.x = Math.round(dragStartAnim.x + dx);
+            anim.y = Math.round(dragStartAnim.y + dy);
+        } 
+        else if (dragMode === 'resize-se') {
+            anim.w = Math.max(1, Math.round(dragStartAnim.w + dx));
+            anim.h = Math.max(1, Math.round(dragStartAnim.h + dy));
+        }
+        else if (dragMode === 'resize-sw') {
+            anim.x = Math.round(dragStartAnim.x + dx);
+            anim.w = Math.max(1, Math.round(dragStartAnim.w - dx));
+            anim.h = Math.max(1, Math.round(dragStartAnim.h + dy));
+        }
+        else if (dragMode === 'resize-ne') {
+            anim.y = Math.round(dragStartAnim.y + dy);
+            anim.w = Math.max(1, Math.round(dragStartAnim.w + dx));
+            anim.h = Math.max(1, Math.round(dragStartAnim.h - dy));
+        }
+        else if (dragMode === 'resize-nw') {
+            anim.x = Math.round(dragStartAnim.x + dx);
+            anim.y = Math.round(dragStartAnim.y + dy);
+            anim.w = Math.max(1, Math.round(dragStartAnim.w - dx));
+            anim.h = Math.max(1, Math.round(dragStartAnim.h - dy));
+        }
+        
+        loadAnimToUI(selectedAnimIndex);
+        render();
+    });
+
+    window.addEventListener('mouseup', () => {
+        isDragging = false;
+        dragMode = null;
+    });
+
+    // Zoom on wheel
+    canvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const zoomSpeed = 0.001;
+        const oldScale = viewScale;
+        viewScale = Math.max(0.01, viewScale - e.deltaY * zoomSpeed);
+        
+        // Zoom towards center
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        
+        // Adjust offset to zoom at mouse
+        // world = (screen - offset) / scale
+        // screen = world * scale + offset
+        // We want world pos at mouse to stay same
+        const worldX = (mouseX - viewOffset.x) / oldScale;
+        const worldY = (mouseY - viewOffset.y) / oldScale;
+        
+        viewOffset.x = mouseX - worldX * viewScale;
+        viewOffset.y = mouseY - worldY * viewScale;
+        
+        render();
+    }, { passive: false });
+
+</script>
+</body>
+</html>
