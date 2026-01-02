@@ -266,5 +266,14 @@ Reference text is in `docs/reference_story_en.md`.
   - **Map Design**: Created `docs/map_design.md` detailing the 6 new maps and their quest logic.
   - **Asset Specs**: Created `docs/asset_design_spec.md` and detailed specs for characters, tilesets, audio, and cutscenes.
   - **Asset Placeholders**: Generated placeholder files and folder structure for all specified assets.
-  - **Asset Pipeline**: Added `public/align_tool.html` and `public/test_sprite.html` to assist in generating and testing JSON atlases for sprite sheets.
+  - **Asset Pipeline**: Added `tools/align_tool.py` (Python/Tkinter) to assist in generating JSON atlases for sprite sheets.
   - **New Assets**: Added `char_black_man` sprite sheet and generated its JSON atlas using the alignment tool.
+
+## Asset Tooling
+
+To run the sprite alignment tool:
+
+```bash
+source tools/venv/bin/activate
+python tools/align_tool.py
+```
