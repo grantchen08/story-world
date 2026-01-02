@@ -263,3 +263,4 @@ Reference text is in `docs/reference_story_en.md`.
   - **UI**: Added dynamic dialogue box resizing to support longer narrative text.
   - **Documentation**: Added `docs/guide_narrative_adaptation.md` to guide future content updates.
   - **Redesign Plan**: Created `docs/narrative_scenes.md` to map the novel's scenes to game levels.
+  - **Map Design**: Created `docs/map_design.md` detailing the 6 new maps and their quest logic.

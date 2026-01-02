@@ -1,6 +1,11 @@
 # Game Redesign Workflow: "Forging the Swords" Adaptation
 
-This document outlines the workflow to redesign "Story World" into a faithful interactive adaptation of Lu Xun's *Forging the Swords*. The goal is to restore the power and impact of the original story by making the main quest follow the novel's exact plot, supported by puzzles and exploration derived directly from the text.
+This document outlines the workflow used to redesign "Story World" into a faithful interactive adaptation of Lu Xun's *Forging the Swords*. The goal is to restore the power and impact of the original story by making the main quest follow the novel's exact plot, supported by puzzles and exploration derived directly from the text.
+
+## Source Material
+*   **Original Novel Text**: `docs/reference_story_en.md` (Full English translation).
+*   **Scene Breakdown**: `docs/narrative_scenes.md` (Deconstruction of the novel into playable scenes with direct quotes).
+*   **Design Blueprint**: `docs/map_design.md` (Translation of scenes into technical map and quest requirements).
 
 ## Phase 1: Narrative Deconstruction
 **Goal**: Break down the original novel into discrete, playable scenes.
