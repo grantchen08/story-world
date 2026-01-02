@@ -276,6 +276,7 @@ class SpriteAligner(tk.Tk):
             self.canvas.create_image(self.view_offset_x, self.view_offset_y, image=self.tk_image, anchor='nw')
 
         # Draw Animations
+        self.ghost_images = []
         for idx, anim in enumerate(self.animations):
             is_selected = (idx == self.selected_index)
             color = '#00ff00' if is_selected else '#4a90e2'
@@ -283,6 +284,42 @@ class SpriteAligner(tk.Tk):
             sx, sy = self.to_screen(anim['x'], anim['y'])
             sw, sh = anim['w'] * self.view_scale, anim['h'] * self.view_scale
             
+            # Ghost overlay (transparent first frame repeated)
+            count = max(1, anim['count'])
+            if count > 1 and anim['w'] > 1 and anim['h'] > 1:
+                frame_w = anim['w'] / count
+                # Ensure source frame is within image bounds
+                src_x, src_y = int(anim['x']), int(anim['y'])
+                src_w, src_h = int(frame_w), int(anim['h'])
+                img_w, img_h = self.original_image.size
+                
+                # Check if first frame is validly within image
+                if src_x >= 0 and src_y >= 0 and src_x + src_w <= img_w and src_y + src_h <= img_h:
+                    try:
+                        frame_img = self.original_image.crop((src_x, src_y, src_x + src_w, src_y + src_h))
+                        if frame_img.mode != 'RGBA':
+                            frame_img = frame_img.convert('RGBA')
+                        
+                        # Apply 50% opacity
+                        alpha = frame_img.getchannel('A')
+                        alpha = alpha.point(lambda p: int(p * 0.5))
+                        frame_img.putalpha(alpha)
+                        
+                        target_w = int(frame_w * self.view_scale)
+                        target_h = int(anim['h'] * self.view_scale)
+                        
+                        if target_w > 0 and target_h > 0:
+                            frame_resized = frame_img.resize((target_w, target_h), Image.Resampling.NEAREST)
+                            ghost_photo = ImageTk.PhotoImage(frame_resized)
+                            self.ghost_images.append(ghost_photo)
+                            
+                            for i in range(1, count):
+                                gx = anim['x'] + i * frame_w
+                                gsx, gsy = self.to_screen(gx, anim['y'])
+                                self.canvas.create_image(gsx, gsy, image=ghost_photo, anchor='nw', tags=f"ghost_{idx}_{i}")
+                    except Exception:
+                        pass
+
             # Rect
             self.canvas.create_rectangle(sx, sy, sx+sw, sy+sh, outline=color, width=2 if is_selected else 1, tags=f"anim_{idx}")
             
