@@ -1,3 +1,5 @@
+Create an image with the specification below.
+
 # Asset Specification: The Mother
 
 ## 1. Description
@@ -15,6 +17,9 @@ Mei Jian Chi's mother is a tragic, weary, yet intensely determined figure. She c
 *   **File Name**: `char_mother.png`
 *   **Sprite Size**: 32x48 or 48x48.
 *   **Art Style**: Pixel art. Consistent with Mei Jian Chi.
+*   **Background**: White (solid white background, no transparency).
+*   **Cleanliness**: Do not draw any grid lines, guides, or rulers.
+*   **Labels**: Do not include any text labels, object names, or annotations directly on the image canvas.
 
 ## 3. Animation States
 

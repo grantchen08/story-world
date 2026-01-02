@@ -1,3 +1,5 @@
+Create an image with the specification below.
+
 # Asset Specification: Tileset - Cedar Forest
 
 ## 1. Description
@@ -7,6 +9,9 @@ The transitional space between home and the city. A place of meeting and death.
 *   **File Name**: `tiles_cedar_forest.png`
 *   **Grid Size**: 32x32.
 *   **Style**: Dark greens, shadows, mystical.
+*   **Background**: White (solid white background, no transparency).
+*   **Cleanliness**: Do not draw any grid lines, guides, or rulers.
+*   **Labels**: Do not include any text labels, object names, or annotations directly on the image canvas.
 
 ## 3. Key Elements
 

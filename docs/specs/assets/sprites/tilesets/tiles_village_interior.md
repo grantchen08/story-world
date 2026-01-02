@@ -1,3 +1,5 @@
+Create an image with the specification below.
+
 # Asset Specification: Tileset - Village Interior
 
 ## 1. Description
@@ -7,6 +9,9 @@ The humble home of Mei Jian Chi and his mother. It represents poverty, tradition
 *   **File Name**: `tiles_village_interior.png`
 *   **Grid Size**: 32x32.
 *   **Style**: Rustic, worn, earthy tones (browns, greys).
+*   **Background**: White (solid white background, no transparency).
+*   **Cleanliness**: Do not draw any grid lines, guides, or rulers.
+*   **Labels**: Do not include any text labels, object names, or annotations directly on the image canvas.
 
 ## 3. Key Elements
 

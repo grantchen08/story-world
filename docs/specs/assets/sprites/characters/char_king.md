@@ -1,3 +1,5 @@
+Create an image with the specification below.
+
 # Asset Specification: The King
 
 ## 1. Description
@@ -15,6 +17,9 @@ The antagonist. Cruel, suspicious, and decadent.
 *   **File Name**: `char_king.png`
 *   **Sprite Size**: 32x48 or 48x48.
 *   **Art Style**: Pixel art. Bloated, opulent.
+*   **Background**: White (solid white background, no transparency).
+*   **Cleanliness**: Do not draw any grid lines, guides, or rulers.
+*   **Labels**: Do not include any text labels, object names, or annotations directly on the image canvas.
 
 ## 3. Animation States
 

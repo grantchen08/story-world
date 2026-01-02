@@ -1,3 +1,5 @@
+Create an image with the specification below.
+
 # Asset Specification: Mei Jian Chi (Protagonist)
 
 ## 1. Description
@@ -18,6 +20,9 @@ Mei Jian Chi is the 16-year-old protagonist of *Forging the Swords*. He is chara
 *   **Sprite Size**: 32x48 or 48x48 (Tall character standard).
 *   **Perspective**: Top-down 2D RPG (3/4 view).
 *   **Art Style**: Pixel art. Muted, somewhat dark palette. Ancient Chinese aesthetic.
+*   **Background**: White (solid white background, no transparency).
+*   **Cleanliness**: Do not draw any grid lines, guides, or rulers.
+*   **Labels**: Do not include any text labels, object names, or annotations directly on the image canvas.
 
 ## 3. Animation States
 
