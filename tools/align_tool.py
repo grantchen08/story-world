@@ -121,6 +121,9 @@ class SpriteAligner(tk.Tk):
         ttk.Label(prop_frame, text="Frame W").grid(row=6, column=0, sticky='w', padx=5)
         ttk.Label(prop_frame, textvariable=self.vars['calc_w']).grid(row=6, column=1, sticky='w', padx=5)
 
+        # Auto Align
+        ttk.Button(prop_frame, text="Auto Align (Best Fit)", command=self.auto_align).grid(row=7, column=0, columnspan=2, sticky='ew', padx=5, pady=5)
+
         prop_frame.columnconfigure(1, weight=1)
 
         # Generate
@@ -334,6 +337,14 @@ class SpriteAligner(tk.Tk):
                 lx = anim['x'] + i * frame_w
                 lsx, _ = self.to_screen(lx, 0)
                 self.canvas.create_line(lsx, sy, lsx, sy+sh, fill=color, dash=(2, 2) if not is_selected else None)
+            
+            # DEBUG: Draw detected centers if available
+            if is_selected and 'debug_centers' in anim:
+                for (dcx, dcy) in anim['debug_centers']:
+                     # These are absolute world coords, convert to screen
+                     scr_x, scr_y = self.to_screen(dcx, dcy)
+                     self.canvas.create_oval(scr_x-2, scr_y-2, scr_x+2, scr_y+2, fill='red', outline='yellow')
+
 
             # Resize Handles (if selected)
             if is_selected:
@@ -601,6 +612,157 @@ class SpriteAligner(tk.Tk):
     def on_mouse_wheel(self, event):
         scale_factor = 1.1 if event.delta > 0 else 0.9
         self.zoom(event, scale_factor)
+
+    def auto_align(self):
+        if self.selected_index == -1: return
+        anim = self.animations[self.selected_index]
+        if anim['count'] < 1: return
+
+        # Get current bounds
+        x, y, w, h = anim['x'], anim['y'], anim['w'], anim['h']
+        count = anim['count']
+        
+        if not self.original_image: return
+        
+        img_w, img_h = self.original_image.size
+        cx = max(0, int(x))
+        cy = max(0, int(y))
+        cw = min(img_w - cx, int(w))
+        ch = min(img_h - cy, int(h))
+        
+        if cw <= 0 or ch <= 0: return
+        
+        # Horizontal Stride Correction Only
+        # We assume the user has set the approximate area and count
+        # We look for the center of mass of each frame estimate to fix the stride (width) and x-offset
+        
+        try:
+            strip_img = self.original_image.crop((cx, cy, cx+cw, cy+ch))
+            if strip_img.mode != 'RGBA': strip_img = strip_img.convert('RGBA')
+            
+            # Note: We skipped vertical trimming based on user feedback to preserve margins.
+            # We work within the user-defined vertical strip.
+            
+            current_frame_w = w / count
+            points = []
+            debug_points = []
+            
+            for i in range(count):
+                sx1 = int(i * current_frame_w)
+                sx2 = int((i + 1) * current_frame_w)
+                if sx2 > strip_img.width: sx2 = strip_img.width
+                if sx1 >= sx2: continue
+                
+                frame_slice = strip_img.crop((sx1, 0, sx2, strip_img.height))
+                
+                # Universal Background Removal (Heuristic)
+                if frame_slice.mode != 'RGBA':
+                    frame_slice = frame_slice.convert('RGBA')
+                
+                r, g, b, a = frame_slice.split()
+                
+                # Sample background color from top-left of this slice
+                try:
+                    bg_color = frame_slice.getpixel((0, 0)) # returns (r,g,b,a)
+                except Exception:
+                    bg_color = (0,0,0,0)
+
+                # If top-left is transparent, assume transparent background
+                if bg_color[3] == 0:
+                     mask = a.point(lambda p: 255 if p > 10 else 0)
+                else:
+                    # Opaque background logic
+                    from PIL import ImageChops
+                    
+                    bg_r, bg_g, bg_b, _ = bg_color
+                    # Create an image of the BG color
+                    bg_img = Image.new('RGB', frame_slice.size, (bg_r, bg_g, bg_b))
+                    
+                    # Calculate difference
+                    diff = ImageChops.difference(frame_slice.convert('RGB'), bg_img)
+                    
+                    # Convert to grayscale to get magnitude of difference
+                    diff_l = diff.convert('L')
+                    
+                    # Threshold: If difference > tolerance, it's content.
+                    mask = diff_l.point(lambda p: 255 if p > 20 else 0)
+
+                f_bbox = mask.getbbox()
+                if bg_color[3] == 0:
+                     mask = a.point(lambda p: 255 if p > 10 else 0)
+                else:
+                    # Opaque background.
+                    # Create a Difference mask from the BG color.
+                    bg_r, bg_g, bg_b, _ = bg_color
+                    
+                    # Create an image of the BG color
+                    bg_img = Image.new('RGB', frame_slice.size, (bg_r, bg_g, bg_b))
+                    
+                    # Calculate difference
+                    diff = ImageChops.difference(frame_slice.convert('RGB'), bg_img)
+                    
+                    # Convert to grayscale to get magnitude of difference
+                    diff_l = diff.convert('L')
+                    
+                    # Threshold: If difference > tolerance, it's content.
+                    # Tolerance 20 seems safe for JPEG artifacts, 5 for clean PNG.
+                    mask = diff_l.point(lambda p: 255 if p > 20 else 0)
+
+                f_bbox = mask.getbbox()
+                
+                if f_bbox:
+                    f_l, f_u, f_r, f_d = f_bbox
+                    
+                    # Refinement: Center of Mass (Weighted X) within this BBox?
+                    # For now, let's stick to BBox center but with the THRESHOLDED mask.
+                    # The previous issue was likely faint noise or background color with alpha > 0
+                    
+                    # Center of content relative to strip start
+                    center_x_rel = sx1 + (f_l + f_r) / 2
+                    center_y_rel = (f_u + f_d) / 2
+                    
+                    print(f"Frame {i}: Slice [{sx1}:{sx2}] BBox (Thres) {f_bbox} -> CenterRel ({center_x_rel}, {center_y_rel})")
+                    
+                    points.append((i, center_x_rel))
+                    debug_points.append((cx + center_x_rel, cy + center_y_rel))
+                else:
+                    print(f"Frame {i}: Slice [{sx1}:{sx2}] is empty (after threshold)")
+
+            anim['debug_centers'] = debug_points
+            
+            if len(points) >= 2:
+                # Linear regression: center_x = stride * i + offset
+                n = len(points)
+                sum_x = sum(p[0] for p in points)
+                sum_y = sum(p[1] for p in points)
+                sum_xy = sum(p[0] * p[1] for p in points)
+                sum_xx = sum(p[0] * p[0] for p in points)
+                
+                print(f"Regression Data: n={n}, sum_x={sum_x}, sum_y={sum_y}, sum_xy={sum_xy}, sum_xx={sum_xx}")
+                
+                denominator = (n * sum_xx - sum_x * sum_x)
+                if denominator != 0:
+                    stride = (n * sum_xy - sum_x * sum_y) / denominator
+                    intercept = (sum_y - stride * sum_x) / n
+                    
+                    print(f"Result: Stride={stride}, Intercept={intercept}")
+                    
+                    # Apply Horizontal changes
+                    new_w = stride * count
+                    # New X: Align such that frame 0 center matches intercept
+                    # absolute_center_0 = x + intercept
+                    # expected_center_0 = new_x + stride/2
+                    # new_x = x + intercept - stride/2
+                    new_x = x + intercept - stride / 2
+                    
+                    anim['x'] = new_x
+                    anim['w'] = new_w
+                    
+                    self.load_prop_ui(self.selected_index)
+                    self.redraw()
+            
+        except Exception as e:
+            print(f"Auto align error: {e}")
 
     def zoom(self, event, factor):
         # Zoom towards mouse
