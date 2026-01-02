@@ -7,6 +7,15 @@ This document details the visual and audio assets required to bring the *Forging
 
 ## 1. Sprite Sheets
 
+### Creation Instructions
+For all sprite sheet and tileset markdown specification files, please start the file with the following instruction:
+"Create an image with the specification below."
+
+Additionally, adhere to these strict constraints:
+*   **Background**: White (solid white background, no transparency).
+*   **Cleanliness**: Do not draw any grid lines, guides, or rulers.
+*   **Labels**: Do not include any text labels, object names, or annotations directly on the image canvas.
+
 ### Characters
 Define the visual style, dimensions, and animation states for characters.
 *   **Format**: [e.g., Pixel Art, 32x32 or 48x48 grids]
