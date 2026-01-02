@@ -3,27 +3,27 @@
     {
       "id": "prologue_start",
       "speaker": "Narrator",
-      "text": "The night is heavy. The oil lamp flickers, casting long shadows against the mud walls. Your mother sits in the corner, mending a garment that looks too large for you.",
+      "text": "The pine torch has burnt out. You stand silently in the dark, gradually seeing the moonlight's brightness. A rat gnaws at the pot lid—crunch, crunch—a noise that grates on your nerves.",
       "choices": [
         {
-          "text": "Watch her silently.",
+          "text": "Scold it softly.",
           "to": "prologue_mother_notice",
           "effects": { "add": { "compassion": 5 } }
         },
         {
-          "text": "Check the door lock again.",
-          "to": "prologue_check_door",
+          "text": "Jab it with a reed.",
+          "to": "prologue_check_rat",
           "effects": { "add": { "heat": 5, "resolve": 5 } }
         }
       ]
     },
     {
-      "id": "prologue_check_door",
+      "id": "prologue_check_rat",
       "speaker": "Narrator",
-      "text": "The bar is solid, but the rats gnawing in the thatch sound like footsteps. You cannot rest.",
+      "text": "You push the rat down. It floats up, scratching the wall, its small sharp red nose gasping hurriedly—sniff, sniff. It looks detestable.",
       "choices": [
         {
-          "text": "Sit down.",
+          "text": "Let it be.",
           "to": "prologue_mother_notice"
         }
       ]
@@ -31,7 +31,7 @@
     {
       "id": "prologue_mother_notice",
       "speaker": "Mother",
-      "text": "You are restless, my son. The water in the jar has been boiling for some time.",
+      "text": "Your mother sits in the grey-white moonlight, her body seeming to tremble. Her low voice contains infinite sorrow: \"The water in the jar has been boiling for some time. But your nature... neither cold nor hot, changing not a bit.\"",
       "choices": [
         {
           "text": "I am waiting for the time.",
@@ -39,7 +39,7 @@
           "effects": { "add": { "resolve": 5 } }
         },
         {
-          "text": "I was just thinking.",
+          "text": "I will change.",
           "to": "prologue_vow_setup"
         }
       ]
@@ -47,15 +47,15 @@
     {
       "id": "prologue_vow_setup",
       "speaker": "Mother",
-      "text": "Your father died on this night, sixteen years ago. His head hangs in the King's city. Do you still remember what you promised?",
+      "text": "She fixes you with eyes flashing in the dim light. \"Your father spent three whole years of his spirit to forge two swords. A jet of white vapor rushed up, turning crimson and casting a peach-blossom glow. But he knew: tears can never wash away fate.\"",
       "choices": [
         {
-          "text": "I will bring his head back.",
+          "text": "I will take revenge.",
           "to": "prologue_vow_commit",
           "effects": { "add": { "resolve": 10, "heat": 5 }, "set": { "vow_taken": true } }
         },
         {
-          "text": "I need to know why he died first.",
+          "text": "Why did he have to die?",
           "to": "prologue_vow_delay",
           "effects": { "add": { "compassion": 10 }, "set": { "vow_taken": false } }
         }
@@ -64,10 +64,10 @@
     {
       "id": "prologue_vow_commit",
       "speaker": "Mother",
-      "text": "Good. The iron is cold, but the blood is still hot. Take the bundle under the bed. It is time to go.",
+      "text": "\"Good. The iron is cold, but the blood is still hot.\" She points to the rotten wood beneath the bed. \"Take the bundle. Dig.\"",
       "choices": [
         {
-          "text": "Take the bundle and leave.",
+          "text": "Dig out the sword.",
           "to": "exit_to_village",
           "effects": { "set": { "currentLocation": "village_square", "quest_main_started": true } }
         }
@@ -76,7 +76,7 @@
     {
       "id": "prologue_vow_delay",
       "speaker": "Mother",
-      "text": "Knowledge is a heavy burden, sometimes heavier than a sword. But if that is your will... take the bundle. Go.",
+      "text": "\"Knowledge is a heavy burden. But if that is your will...\" She sighs, a long, soft sound of disappointment. \"Take the bundle. Go. The cock has crowed.\"",
       "choices": [
         {
           "text": "Take the bundle and leave.",

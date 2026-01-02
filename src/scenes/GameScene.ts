@@ -6,6 +6,7 @@ import { QuestSystem } from '../systems/QuestSystem';
 import { Patrol } from '../objects/Patrol';
 import { TimeOfDay } from '../systems/GameState';
 import { SpriteGenerator } from '../systems/SpriteGenerator';
+import { AreaDescriptions } from '../systems/FlavorText';
 
 export class GameScene extends Phaser.Scene {
   private player!: Phaser.GameObjects.Sprite;
@@ -350,6 +351,31 @@ export class GameScene extends Phaser.Scene {
       if (newLocation === 'city_gate') {
           GameState.getInstance().setFlag('reached_city_gate', true);
       }
+
+      // Show Area Description (Flavor Text)
+      const flavorText = AreaDescriptions[newLocation];
+      if (flavorText) {
+          this.time.delayedCall(500, () => {
+              // Don't interrupt active dialogue (like Prologue start)
+              if (!this.isDialogueOpen) {
+                  this.showFlavorText(flavorText);
+              }
+          });
+      }
+  }
+
+  private showFlavorText(text: string) {
+      this.isDialogueOpen = true;
+      this.events.emit('show-dialogue', {
+          text: `Narrator: ${text}`,
+          choices: [{
+              text: "Continue...",
+              callback: () => {
+                  this.isDialogueOpen = false;
+                  this.events.emit('hide-dialogue');
+              }
+          }]
+      });
   }
 
   private setupLocationEntities(location: string) {
