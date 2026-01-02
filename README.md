@@ -256,3 +256,8 @@ Reference text is in `docs/reference_story_en.md`.
   - **Visual Polish**: Added pixel-perfect rendering, lighting overlays, and time-of-day/Heat atmosphere.
   - **Procedural Sprites**: Replaced placeholder circles with generated pixel-art characters (Player, Guard, NPCs).
   - **Feedback**: Added screen shake and flash on stealth detection.
+
+- **v0.1.11**:
+  - **Narrative Flavor**: Integrated original "Forging the Swords" text into Prologue and map descriptions.
+  - **Area Descriptions**: Added a system to trigger atmospheric narrator text when entering new maps.
+  - **Documentation**: Added `docs/guide_narrative_adaptation.md` to guide future content updates.
