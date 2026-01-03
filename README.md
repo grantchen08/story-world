@@ -269,6 +269,13 @@ Reference text is in `docs/reference_story_en.md`.
   - **Asset Pipeline**: Added `tools/align_tool.py` (Python/Tkinter) to assist in generating JSON atlases for sprite sheets.
   - **New Assets**: Added `char_black_man` sprite sheet and generated its JSON atlas using the alignment tool.
 
+- **v0.1.12**:
+  - **Asset Tool Enhancements**: Updated `tools/align_tool.py` with advanced features:
+    - **Ghost Overlay**: Semi-transparent previous frame reference for easier animation alignment.
+    - **Auto-Align**: Algorithm to automatically detect sprite content (ignoring background) and calculate optimal stride/offset.
+    - **Tileset Support**: Ability to load, edit, and save Tileset JSONs (`tiles_*.json`), preserving metadata like descriptions and categories.
+  - **Documentation**: Updated asset specs to enforce strict generation rules (white background, no labels).
+
 ## Asset Tooling
 
 To run the sprite alignment tool:

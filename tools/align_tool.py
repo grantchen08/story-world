@@ -22,6 +22,8 @@ class SpriteAligner(tk.Tk):
         # State
         self.animations = [] # List of dicts
         self.selected_index = -1
+        self.json_data = None
+        self.json_mode = 'sprite' # 'sprite' or 'tileset'
         
         # Interaction State
         self.is_dragging = False
@@ -186,7 +188,23 @@ class SpriteAligner(tk.Tk):
         try:
             with open(json_path, 'r') as f:
                 data = json.load(f)
+            self.json_data = data
             
+            if 'tiles' in data:
+                self.json_mode = 'tileset'
+                self.animations = []
+                for t in data.get('tiles', []):
+                    self.animations.append({
+                        'name': t.get('id', 'unknown'),
+                        'x': t.get('x', 0),
+                        'y': t.get('y', 0),
+                        'w': t.get('w', 32),
+                        'h': t.get('h', 32),
+                        'count': t.get('frames', 1)
+                    })
+                return
+
+            self.json_mode = 'sprite'
             frames = data.get('frames', {})
             # Group frames by prefix
             groups = {}
@@ -440,6 +458,23 @@ class SpriteAligner(tk.Tk):
         if not self.original_image:
             return None
         
+        if getattr(self, 'json_mode', 'sprite') == 'tileset' and getattr(self, 'json_data', None):
+            output = self.json_data
+            tiles = output.get('tiles', [])
+            anim_map = {a['name']: a for a in self.animations}
+            
+            for t in tiles:
+                name = t.get('id')
+                if name in anim_map:
+                    anim = anim_map[name]
+                    t['x'] = int(anim['x'])
+                    t['y'] = int(anim['y'])
+                    t['w'] = int(anim['w'])
+                    t['h'] = int(anim['h'])
+                    if anim['count'] > 1:
+                        t['frames'] = anim['count']
+            return output
+
         frames = {}
         for anim in self.animations:
             count = max(1, anim['count'])
@@ -685,27 +720,6 @@ class SpriteAligner(tk.Tk):
                     diff_l = diff.convert('L')
                     
                     # Threshold: If difference > tolerance, it's content.
-                    mask = diff_l.point(lambda p: 255 if p > 20 else 0)
-
-                f_bbox = mask.getbbox()
-                if bg_color[3] == 0:
-                     mask = a.point(lambda p: 255 if p > 10 else 0)
-                else:
-                    # Opaque background.
-                    # Create a Difference mask from the BG color.
-                    bg_r, bg_g, bg_b, _ = bg_color
-                    
-                    # Create an image of the BG color
-                    bg_img = Image.new('RGB', frame_slice.size, (bg_r, bg_g, bg_b))
-                    
-                    # Calculate difference
-                    diff = ImageChops.difference(frame_slice.convert('RGB'), bg_img)
-                    
-                    # Convert to grayscale to get magnitude of difference
-                    diff_l = diff.convert('L')
-                    
-                    # Threshold: If difference > tolerance, it's content.
-                    # Tolerance 20 seems safe for JPEG artifacts, 5 for clean PNG.
                     mask = diff_l.point(lambda p: 255 if p > 20 else 0)
 
                 f_bbox = mask.getbbox()
