@@ -275,6 +275,9 @@ Reference text is in `docs/reference_story_en.md`.
     - **Auto-Align**: Algorithm to automatically detect sprite content (ignoring background) and calculate optimal stride/offset.
     - **Tileset Support**: Ability to load, edit, and save Tileset JSONs (`tiles_*.json`), preserving metadata like descriptions and categories.
   - **Documentation**: Updated asset specs to enforce strict generation rules (white background, no labels).
+  
+- **v0.1.13**:
+  - **New Assets**: Added `char_mei_jian_chi` sprite sheet (PNG and JSON) with animations for Idle, Walk, Digging, Shock, Draw Sword, and Headless states.
 
 ## Asset Tooling
 
