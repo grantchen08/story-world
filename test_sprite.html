@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sprite Sheet Tester</title>
+    <style>
+        body { margin: 0; background: #333; color: white; font-family: sans-serif; }
+        #controls { position: absolute; top: 10px; left: 10px; z-index: 100; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 4px; }
+        button { padding: 8px 12px; margin-right: 5px; cursor: pointer; background: #555; color: white; border: 1px solid #777; border-radius: 4px; }
+        button:hover { background: #777; }
+        button.active { background: #4a90e2; border-color: #357abd; }
+        #info { margin-top: 10px; font-size: 14px; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+</head>
+<body>
+    <div id="controls">
+        <div id="buttons">
+            <button onclick="playAnim('idle')">Idle</button>
+            <button onclick="playAnim('walk')">Walk</button>
+            <button onclick="playAnim('combat')">Combat</button>
+            <button onclick="playAnim('singing')">Singing</button>
+            <button onclick="playAnim('dancing')">Dancing</button>
+        </div>
+        <div id="info">Loading...</div>
+    </div>
+    <div id="game-container"></div>
+
+    <script>
+        let sprite;
+        let game;
+
+        const config = {
+            type: Phaser.AUTO,
+            width: window.innerWidth,
+            height: window.innerHeight,
+            backgroundColor: '#888888',
+            parent: 'game-container',
+            pixelArt: true, // Crucial for pixel art
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            }
+        };
+
+        game = new Phaser.Game(config);
+
+        function preload() {
+            // Load using .atlas instead of .multiatlas for a single image+json pair
+            this.load.atlas('black_man', 'assets/sprites/characters/char_black_man.png', 'assets/sprites/characters/char_black_man.json');
+        }
+
+        function create() {
+            document.getElementById('info').innerText = 'Loaded! Click buttons to change animation.';
+
+            // Create Animations
+            
+            // Idle: Row 1 left half (indices 0-3)
+            this.anims.create({
+                key: 'idle',
+                frames: this.anims.generateFrameNames('black_man', { start: 0, end: 3, prefix: 'idle_' }),
+                frameRate: 4,
+                repeat: -1
+            });
+
+            // Walk: Row 1 right half (indices 4-7 mapped to 0-3)
+            this.anims.create({
+                key: 'walk',
+                frames: this.anims.generateFrameNames('black_man', { start: 0, end: 3, prefix: 'walk_' }),
+                frameRate: 12,
+                repeat: -1
+            });
+
+            // Combat: Row 2 left half (indices 0-3)
+            this.anims.create({
+                key: 'combat',
+                frames: this.anims.generateFrameNames('black_man', { start: 0, end: 3, prefix: 'combat_' }),
+                frameRate: 12,
+                repeat: -1
+            });
+
+            // Singing: Row 2 right half (indices 0-3)
+            this.anims.create({
+                key: 'singing',
+                frames: this.anims.generateFrameNames('black_man', { start: 0, end: 3, prefix: 'singing_' }),
+                frameRate: 4,
+                repeat: -1
+            });
+
+            // Dancing: Row 3 (indices 0-7)
+            this.anims.create({
+                key: 'dancing',
+                frames: this.anims.generateFrameNames('black_man', { start: 0, end: 7, prefix: 'dancing_' }),
+                frameRate: 8,
+                repeat: -1
+            });
+
+            // Add the sprite to the center of the screen
+            const centerX = this.cameras.main.width / 2;
+            const centerY = this.cameras.main.height / 2;
+            
+            // Start with idle
+            sprite = this.add.sprite(centerX, centerY, 'black_man', 'idle_0');
+            
+            // The sprite size is large (352x512), scale DOWN
+            sprite.setScale(0.5); 
+            
+            // Play default
+            sprite.play('idle');
+
+            // Add a grid/ground line for reference
+            const graphics = this.add.graphics();
+            graphics.lineStyle(2, 0x00ff00, 0.5);
+            graphics.lineBetween(0, centerY + (sprite.height * sprite.scaleY) / 2, this.cameras.main.width, centerY + (sprite.height * sprite.scaleY) / 2);
+            
+            // Update scaling on resize
+            window.addEventListener('resize', () => {
+                game.scale.resize(window.innerWidth, window.innerHeight);
+                sprite.setPosition(window.innerWidth/2, window.innerHeight/2);
+            });
+        }
+
+        function update() {
+            // Nothing needed in loop for now
+        }
+
+        // Global function for HTML buttons
+        window.playAnim = function(key) {
+            if (sprite) {
+                sprite.play(key);
+                
+                // Update button UI
+                document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                const btn = Array.from(document.querySelectorAll('button')).find(b => b.innerText.toLowerCase() === key);
+                if (btn) btn.classList.add('active');
+                
+                document.getElementById('info').innerText = `Playing: ${key}`;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+{
+  "tileset_metadata": {
+    "name": "Village Interior - Mei Jian Chi's Home",
+    "file_name": "tiles_village_interior.png",
+    "tile_size": "32x32",
+    "style": "Rustic, worn, earthy",
+    "total_tiles": 20
+  },
+  "tiles": [
+    {
+      "id": "wall_mud_basic",
+      "category": "Structure",
+      "type": "Wall",
+      "description": "Crude mud wall with visible cracks and earthy texture.",
+      "variants": ["plain", "heavy_cracks"]
+    },
+    {
+      "id": "wall_mud_rathole",
+      "category": "Structure",
+      "type": "Wall",
+      "description": "Mud wall section featuring a small dark rat hole at the base.",
+      "reference_quote": "Stuck the torch into a small hole in the mud wall."
+    },
+    {
+      "id": "floor_dirt",
+      "category": "Structure",
+      "type": "Floor",
+      "description": "Packed dirt flooring, uneven and worn.",
+      "walkable": true
+    },
+    {
+      "id": "floor_wood_planks",
+      "category": "Structure",
+      "type": "Floor",
+      "description": "Worn wooden planks, vertical and horizontal variants.",
+      "walkable": true
+    },
+    {
+      "id": "bed_straw_mat",
+      "category": "Furniture",
+      "type": "Bed",
+      "description": "Simple wooden bed frame with a woven straw mat.",
+      "dimensions": "Variable (Head/Foot sections)"
+    },
+    {
+      "id": "bed_board_head",
+      "category": "Object",
+      "type": "Prop",
+      "description": "A wooden board used at the head of the bed.",
+      "reference_quote": "Lifted the board at the head of the bed."
+    },
+    {
+      "id": "jar_earthenware_large",
+      "category": "Object",
+      "type": "Container",
+      "description": "Large brown earthenware water jar.",
+      "variants": ["empty", "filled_with_water"],
+      "reference_quote": "Scratching along the inner wall of the jar."
+    },
+    {
+      "id": "furnace_pitch_black",
+      "category": "Object",
+      "type": "Appliance",
+      "description": "An old, unused stove/furnace, black with soot.",
+      "reference_quote": "pitch-black furnace"
+    },
+    {
+      "id": "chest_dilapidated",
+      "category": "Furniture",
+      "type": "Container",
+      "description": "Old wooden clothes chest, showing signs of heavy wear and decay."
+    },
+    {
+      "id": "vessel_wooden_bucket",
+      "category": "Object",
+      "type": "Container",
+      "description": "Small wooden bucket/vessel for food or water storage."
+    },
+    {
+      "id": "tool_hoe",
+      "category": "Item",
+      "type": "Tool",
+      "description": "A farming hoe with a wooden handle and metal head.",
+      "reference_quote": "took a hoe from behind the door"
+    }
+  ]
+}
