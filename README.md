@@ -6,6 +6,12 @@ The game is **story-first**: exploration, dialogue, stealth/evasion, and small s
 
 ---
 
+> [!IMPORTANT]
+> **Redesign in Progress**: This project is currently undergoing a faithful adaptation redesign based on Lu Xun's *Forging the Swords*.
+> See [Game Redesign Workflow](docs/redesign_workflow.md) for the new AI-driven, data-centric development pipeline.
+
+---
+
 ## Design goals
 
 - **Faithful tone, playable structure**: preserve the story's tension (revenge vs mercy) while shaping it into interactive chapters.

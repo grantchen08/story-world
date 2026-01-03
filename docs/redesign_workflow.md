@@ -23,59 +23,81 @@ For each distinct scene in the novel:
     *   **Events**: What happens? What is said?
 
 ## Phase 2: Map & Quest Design
-**Goal**: Translate narrative scenes into game maps, puzzles, and progression logic.
+**Goal**: Translate narrative scenes into detailed technical map specifications and progression logic.
 
 **Output**: `docs/map_design.md`
 
 **Process**:
 For each required map:
-1.  **Map Definition**:
-    *   Name/ID (e.g., `map_bedroom`).
-    *   Visual Style: Colors, lighting, and assets based on Phase 1 descriptions.
-2.  **Entity Placement**:
-    *   **NPCs**: Where do they stand?
-    *   **Objects**: Where are they located? (e.g., "The water jar is in the corner").
+1.  **Map Specification**:
+    *   **Dimensions**: Exact width and height (e.g., 40x30 tiles).
+    *   **Composition**: Major zones and their layout (e.g., "North: Sleeping area, South: Exit to courtyard").
+    *   **Visual Style**: Colors, lighting, and assets based on Phase 1 descriptions.
+2.  **Entity Kinetics**:
+    *   **NPCs**: Initial locations (coordinates), patrol ranges, and movement trajectories.
+    *   **Objects/Props**: Exact grid locations for all interactive and decorative items.
 3.  **Main Quest Design (The Original Path)**:
     *   **Objective**: What must the player do to advance?
     *   **Puzzles/Conditions**:
-        *   *Information Gates*: Answering questions based on previous dialogue (e.g., "What color was the vapor?").
-        *   *Item Gates*: Obtaining specific objects mentioned in the text (e.g., "Find the fire drill").
-        *   *Logic Gates*: Performing actions in order (e.g., "Wait for the cock to crow").
+        *   *Information Gates*: Answering questions based on previous dialogue.
+        *   *Item Gates*: Obtaining specific objects.
+        *   *Logic Gates*: Performing actions in order.
 4.  **Alternative Paths (Optional)**:
-    *   If the player diverges from the novel, what happens? (Secondary priority).
+    *   Divergent interactions and their consequences.
 
-## Phase 3: Asset Design & Generation
-**Goal**: Create specific visual and audio requirements based on the narrative and map designs.
+## Phase 3: Data-Driven Spec Generation (AI/Automation)
+**Goal**: Convert designs into machine-readable JSON specifications to enable AI-driven asset generation and map construction. Maps will be generated programmatically, not manually drawn.
 
-**Output**: `docs/asset_design_spec.md` (High-level list), `docs/specs/assets/...` (Detailed artist specs).
+**Output**:
+*   `docs/data/assets.json` (Master registry of all assets)
+*   `public/assets/**/*.json` (Individual AI generation specs co-located with intended asset files)
+*   `docs/data/maps/map_*.json` (Map definitions)
+*   `docs/data/dialogue.json`
+*   `docs/data/quests.json`
 
 **Process**:
-1.  **Sprite Sheets**: Define character appearances, animations, and tileset needs.
-2.  **Cut Scenes**: Outline visual storytelling requirements for key narrative moments.
-3.  **Audio**:
-    *   **BGM**: Define mood, tempo, and instrumentation for each area.
-    *   **SFX**: List required sound effects for interactions and environment.
-4.  **Artist Spec Generation**:
-    *   For each asset identified in `asset_design_spec.md`:
-        1.  Create a detailed markdown spec in `docs/specs/assets/[type]/[asset_id].md`.
-        2.  Derive details directly from `docs/reference_story_en.md`.
-        3.  Ensure consistency with the "Ancient China / Mythological" aesthetic.
-        4.  Create a placeholder file in `public/assets/[type]/[asset_id].[ext]` for immediate development use.
+1.  **Asset Specifications**:
+    *   **Master Registry (`docs/data/assets.json`)**: Create a top-level file listing every asset to be used in the game.
+        *   Fields: `id` (meaningful name), `path` (relative path to file), `type` (sprite, audio, etc.), `brief_description`.
+    *   **Individual Asset Specs**: For *each* asset listed in the registry, create a corresponding JSON file at the *same location* as the intended asset (e.g., if asset is `img/hero.png`, spec is `img/hero.json`).
+        *   Content: A detailed description specifically designed as a prompt for AI generation of that single asset.
+2.  **Map Definitions**:
+    *   Generate a structured JSON for each map (e.g., `docs/data/maps/map_village.json`).
+    *   Content:
+        *   `tileset`: References to IDs from `assets.json`.
+        *   `layout`: Algorithmic rules or data for tile placement (AI-generated).
+        *   `entities`: Arrays of NPCs and Objects with coordinates derived from Phase 2.
+        *   `audio`: References to audio asset IDs.
+        *   `properties`: Lighting, weather, and other metadata.
+3.  **Narrative Data**:
+    *   Structure all dialogues and quest steps into `dialogue.json` and `quests.json`.
 
-## Phase 4: Implementation Strategy
-**Goal**: Build the redesigned game in iterative stages.
+## Phase 4: Asset Generation
+**Goal**: Create actual visual and audio assets based strictly on the Phase 3 JSON specifications.
+
+**Output**: `public/assets/...`
+
+**Process**:
+1.  **Execution**: Use the `assets.json` specs to generate:
+    *   Character Sprite Sheets (Idle, Walk, Interact).
+    *   Tilesets (Walls, floors, decorations).
+    *   Audio files (BGM, SFX).
+2.  **Validation**: Ensure generated assets match the dimensions and styles defined in the JSONs.
+
+## Phase 5: Programmatic Implementation
+**Goal**: Build the game by parsing the data generated in Phase 3.
 
 **Execution Order**:
-1.  **Map Building**: Create Tiled maps (`.json`) for each location identified in Phase 2 using assets from Phase 3.
-2.  **Data Entry**: Write the new `dialogue.json` and `quests.json` files using the extracted text.
-3.  **Logic Coding**:
-    *   Implement specific puzzle mechanics (e.g., a "Waiting" mechanic, a "Digging" minigame).
-    *   Wire up map transitions based on the designed conditions.
+1.  **Map Generation**: Write scripts to read `maps/*.json` and dynamically generate the game world (tiles, collision, entities) programmatically.
+2.  **System Integration**:
+    *   Load `dialogue.json` and `quests.json` into the engine.
+    *   Implement special logic mechanics (minigames, custom events) described in Phase 2.
 
 ---
 
 ## Next Steps
-1.  **Execute Phase 1**: Create `docs/narrative_scenes.md` by analyzing the novel text.
-2.  **Execute Phase 2**: Create `docs/map_design.md` based on the scenes.
-3.  **Execute Phase 3**: Create `docs/asset_design_spec.md` defining all required assets.
-4.  **Execute Phase 4**: Begin implementation of the first chapter (The Village/Bedroom).
+1.  **Execute Phase 1**: Create `docs/narrative_scenes.md`.
+2.  **Execute Phase 2**: Create `docs/map_design.md` with detailed metrics and kinetics.
+3.  **Execute Phase 3**: Generate JSON specifications for assets, maps, and text.
+4.  **Execute Phase 4**: Generate assets based on JSONs.
+5.  **Execute Phase 5**: Program the game to read the JSONs and render the world.
